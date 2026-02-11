@@ -8,7 +8,7 @@ const deploymentSchema = new mongoose.Schema({
     },
     environment_id : { 
         type: mongoose.Schema.Types.ObjectId,
-        ref: " Environment",
+        ref: "Environment",
         required: true
 
 
@@ -20,12 +20,27 @@ const deploymentSchema = new mongoose.Schema({
     },
     version : { type: String, required: true},
     branch: String,
-    triggered_by : String,
+
+    triggered_by: {
+  source: {
+    type: String,
+    enum: ['github', 'manual', 'system'],
+    required: true
+  },
+  username: {
+    type: String // GitHub username or system name
+  },
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+},
+
     status: { type: String, enum : ['pending', 'running', 'success', 'failure'], default: 'pending'},
     start_time : { type: Date},
     end_time : { type: Date}
 },
-{ timestamps: { createdAt: true, updatedAt: false } }
+ { timestamps: true }
 );
 
 module.exports.Deployment = mongoose.model("Deployment", deploymentSchema);
