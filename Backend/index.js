@@ -8,6 +8,7 @@ const {protect} = require("./middleware/authMiddleware");
 
 const authRoutes = require("./routes/authRoute");
 const { authorizeRoles } = require("./middleware/roleMiddleware");
+const deploymentRoutes = require("./routes/deploymentsRoute");
 
 // import express from 'express';
 // import cors from 'cors';
@@ -23,11 +24,15 @@ dotenv.config();
 
 app.use(cors());
 app.use(express.json());
+
+// app.use("/",)
 app.use("/api/auth", authRoutes);
+app.use("/api/deployments",deploymentRoutes);
 
 app.use("/",protect,authorizeRoles("admin") ,(req,res) => {
     res.send("Protected Route Accessed");
 });
+app.use
 connectDB();
 
 // 
