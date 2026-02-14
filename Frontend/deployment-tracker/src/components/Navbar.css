@@ -1,0 +1,106 @@
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background-color: #f5f7fa;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid #e0e0e0;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background-color: #2563eb;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+}
+
+.logo h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Navigation */
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-links a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #1f2937;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-links a:hover {
+  background-color: #e5e7eb;
+}
+
+/* Active link */
+.nav-links a.active {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  color: white;
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+}
+
+/* Plan Card */
+.plan-card {
+  background-color: #e5e7eb;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.plan-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 5px;
+}
+
+.plan-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #d1d5db;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  width: 75%;
+  height: 100%;
+  background-color: #2563eb;
+}
+
+.nodes {
+  font-size: 13px;
+  color: #374151;
+}
