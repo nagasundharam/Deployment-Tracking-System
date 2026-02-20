@@ -15,6 +15,7 @@ import Environments from "./pages/Environments";
 import AuditLogs from "./pages/Auditlogs";
 import Settings from "./pages/Settings";
 import ErrorPage from "./pages/ErrorPage";
+import DeploymentDetails from "./pages/DeploymentsDetails";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -24,6 +25,8 @@ const router = createBrowserRouter(
         <Route index element={<Dashboard />} />
         <Route path="projects" element={<Projects />} />
         <Route path="deployments" element={<Deployments />} />
+
+        <Route path="deployments/:id" element={< DeploymentDetails />} />
         <Route path="users" element={<Users />} />
         <Route path="environments" element={<Environments />} />
         <Route path="audit-logs" element={<AuditLogs />} />

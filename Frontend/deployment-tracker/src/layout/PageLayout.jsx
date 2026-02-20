@@ -14,10 +14,10 @@ function PageLayout() {
       {/* Main Section */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         
-        {/* Top Search */}
+        {/* Top Search
         <div style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>
           <SearchBar />
-        </div>
+        </div> */}
 
         {/* Page Content */}
         <div style={{ flex: 1, padding: "20px" }}>
