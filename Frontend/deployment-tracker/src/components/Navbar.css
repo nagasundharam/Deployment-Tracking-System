@@ -1,39 +1,47 @@
-/* RESET (IMPORTANT) */
+/* =========================
+   GLOBAL RESET
+========================= */
 body {
   margin: 0;
-  padding: 0;
+  font-family: Inter, sans-serif;
 }
 
-/* Sidebar Container */
+/* =========================
+   SIDEBAR CONTAINER
+========================= */
 .sidebar {
-  width: 200px;
-  height: 100vh;
-  background-color: #ffffff;
-  padding: 20px 16px;
+  width: 240px;
+  min-height: 100vh; /* safer than fixed height */
+  background: linear-gradient(180deg, #ffffff, #f9fafb);
+  padding: 24px 18px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   border-right: 1px solid #e5e7eb;
+  box-sizing: border-box;
 }
 
-/* Logo Section */
+/* =========================
+   LOGO SECTION
+========================= */
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: 14px;
+  margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 18px;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
 }
 
 .logo h2 {
@@ -43,62 +51,100 @@ body {
   color: #111827;
 }
 
-/* Navigation */
+.role-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
+  background: #e0ecff;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* =========================
+   NAVIGATION SECTION
+========================= */
 .nav-links {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  flex: 1;                 /* KEY FIX */
+  overflow-y: auto;        /* Scroll if items exceed height */
+  margin-top: 10px;
+  padding-right: 4px;      /* Prevent scrollbar overlap */
+}
+
+/* Scrollbar Styling (Optional but Professional) */
+.nav-links::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav-links::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 6px;
+}
+
+.nav-links::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 .nav-links a {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
+  gap: 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
   text-decoration: none;
   color: #374151;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  white-space: nowrap; /* Prevent text breaking */
 }
 
-/* Hover */
+/* Hover Effect */
 .nav-links a:hover {
-  background-color: #f3f4f6;
+  background: #eef2ff;
+  transform: translateX(6px);
 }
 
 /* Active Link */
 .nav-links a.active {
-  background-color: #2563eb;
+  background: #2563eb;
   color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-/* Plan Card */
+/* =========================
+   PLAN CARD
+========================= */
 .plan-card {
-  background-color: #f3f4f6;
-  padding: 14px;
-  border-radius: 12px;
+  background: #f3f4f6;
+  padding: 16px;
+  border-radius: 14px;
+  margin-top: 16px;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .plan-label {
   font-size: 11px;
   font-weight: 600;
   color: #6b7280;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .plan-card h3 {
-  margin: 0 0 10px 0;
-  font-size: 15px;
+  margin: 0 0 12px 0;
+  font-size: 16px;
   font-weight: 600;
   color: #111827;
 }
 
 .progress-bar {
   width: 100%;
-  height: 6px;
-  background-color: #e5e7eb;
-  border-radius: 6px;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 8px;
   overflow: hidden;
   margin-bottom: 8px;
 }
@@ -106,7 +152,7 @@ body {
 .progress-fill {
   width: 75%;
   height: 100%;
-  background-color: #2563eb;
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
 }
 
 .nodes {

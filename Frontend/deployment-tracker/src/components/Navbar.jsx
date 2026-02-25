@@ -10,55 +10,91 @@ import {
   Settings
 } from "lucide-react";
 
-function Sidebar() {
-  return (
-    <div className="sidebar">
+/*
+  Role Definitions:
+  - admin: Full system access
+  - devops: Infra + deployments + environments
+  - developer: Projects + deployments (limited)
+*/
 
-      {/* Logo Section */}
+const navConfig = [
+  {
+    name: "Dashboard",
+    path: "/",
+    icon: LayoutDashboard,
+    roles: ["admin", "devops", "developer"]
+  },
+  {
+    name: "Projects",
+    path: "/projects",
+    icon: FolderKanban,
+    roles: ["admin", "developer"]
+  },
+  {
+    name: "Deployments",
+    path: "/deployments",
+    icon: Rocket,
+    roles: ["admin", "devops", "developer"]
+  },
+  {
+    name: "Users",
+    path: "/users",
+    icon: Users,
+    roles: ["admin"]
+  },
+  {
+    name: "Environments",
+    path: "/environments",
+    icon: Layers,
+    roles: ["admin", "devops"]
+  },
+  {
+    name: "Audit Logs",
+    path: "/audit-logs",
+    icon: FileText,
+    roles: ["admin"]
+  },
+  {
+    name: "Settings",
+    path: "/settings",
+    icon: Settings,
+    roles: ["admin"]
+  }
+];
+
+function Navbar({ role = "admin" }) {
+  const filteredNav = navConfig.filter(item =>
+    item.roles.includes(role)
+  );
+
+  return (
+    <aside className="sidebar">
+
+      {/* Logo */}
       <div className="logo">
         <div className="logo-icon">🚀</div>
-        <h2>DeployFlow</h2>
+        <div>
+          <h2>DeployFlow</h2>
+          <span className="role-badge">
+            {role.toUpperCase()}
+          </span>
+        </div>
       </div>
 
       {/* Navigation */}
       <nav className="nav-links">
-        <NavLink to="/" end>
-          <LayoutDashboard size={18} />
-          <span>Dashboard</span>
-        </NavLink>
-
-        <NavLink to="projects">
-          <FolderKanban size={18} />
-          <span>Projects</span>
-        </NavLink>
-
-        <NavLink to="deployments">
-          <Rocket size={18} />
-          <span>Deployments</span>
-        </NavLink>
-
-        <NavLink to="users">
-          <Users size={18} />
-          <span>Users</span>
-        </NavLink>
-
-        <NavLink to="environments">
-          <Layers size={18} />
-          <span>Environments</span>
-        </NavLink>
-
-        <NavLink to="audit-logs">
-          <FileText size={18} />
-          <span>Audit Logs</span>
-        </NavLink>
-
-        <NavLink to="settings">
-          <Settings size={18} />
-          <span>Settings</span>
-        </NavLink>
+        {filteredNav.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <NavLink key={index} to={item.path} end>
+              <Icon size={18} />
+              <span>{item.name}</span>
+            </NavLink>
+          );
+        })}
       </nav>
 
-      {/* Plan Card */}
+      {/* Plan Card (Always stays bottom naturally now) */}
       <div className="plan-card">
         <p className="plan-label">CURRENT PLAN</p>
         <h3>Enterprise Tier</h3>
@@ -67,11 +103,9 @@ function Sidebar() {
           <div className="progress-fill"></div>
         </div>
 
-        <p className="nodes">750/1000 Managed Nodes</p>
+        <p className="nodes">750 / 1000 Managed Nodes</p>
       </div>
-
-    </div>
+    </aside>
   );
 }
-
-export default Sidebar;
+export default Navbar;

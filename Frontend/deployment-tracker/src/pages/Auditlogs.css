@@ -1,0 +1,179 @@
+/* ===== Layout ===== */
+.audit-container {
+  padding: 30px;
+  font-family: "Inter", sans-serif;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+/* ===== Header ===== */
+.audit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.audit-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.export-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.export-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ===== Filter Section ===== */
+.audit-filters {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.audit-filters input,
+.audit-filters select {
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.audit-filters input:focus,
+.audit-filters select:focus {
+  border-color: #2563eb;
+}
+
+/* ===== Table ===== */
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.audit-table thead {
+  background: #f9fafb;
+}
+
+.audit-table th {
+  text-align: left;
+  padding: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.audit-table td {
+  padding: 14px;
+  font-size: 14px;
+  color: #374151;
+  border-top: 1px solid #f1f5f9;
+}
+
+.audit-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* ===== Action Badges ===== */
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badge-delete {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge-update {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-login {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.badge-deploy {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-modify {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* ===== Pagination ===== */
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.page-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.page-btn:hover {
+  background: #f3f4f6;
+}
+
+.page-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* ===== Empty State ===== */
+.no-data {
+  text-align: center;
+  padding: 25px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .audit-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pagination {
+    justify-content: center;
+  }
+}

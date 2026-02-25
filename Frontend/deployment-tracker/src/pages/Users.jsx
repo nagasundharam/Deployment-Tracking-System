@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./Users.css";
+import CreateUserModal from "../components/CreateUserModal";
 
 const initialUsers = [
   {
@@ -16,13 +17,6 @@ const Users = () => {
   const [users, setUsers] = useState(initialUsers);
   const [showModal, setShowModal] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    role: "Developer",
-    projects: "",
-  });
-
   const toggleStatus = (id) => {
     setUsers((prev) =>
       prev.map((user) =>
@@ -31,42 +25,8 @@ const Users = () => {
     );
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleAddUser = (e) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.email) {
-      alert("Name and Email are required");
-      return;
-    }
-
-    const newUser = {
-      id: Date.now(),
-      name: formData.name,
-      email: formData.email,
-      role: formData.role,
-      projects: formData.projects
-        ? formData.projects.split(",").map((p) => p.trim())
-        : [],
-      active: true,
-    };
-
-    setUsers([...users, newUser]);
-
-    setFormData({
-      name: "",
-      email: "",
-      role: "Developer",
-      projects: "",
-    });
-
-    setShowModal(false);
+  const handleCreateUser = (newUser) => {
+    setUsers((prev) => [...prev, newUser]);
   };
 
   return (
@@ -119,8 +79,12 @@ const Users = () => {
           </div>
         ))}
       </div>
-      
 
+      <CreateUserModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onCreate={handleCreateUser}
+      />
     </div>
   );
 };

@@ -16,16 +16,19 @@ const CreateUserModal = ({ isOpen, onClose, onCreate }) => {
       [e.target.name]: e.target.value,
     });
   };
-
   const handleSubmit = (e) => {
-    e.preventDefault();
-    onCreate({
-      ...formData,
-      id: Date.now(),
-      active: true,
-    });
-    onClose();
-  };
+  e.preventDefault();
+
+  onCreate({
+    ...formData,
+    id: Date.now(),
+    active: true,
+    projects: [],  
+  });
+
+  onClose();
+};
+
 
   return (
     <div className="modal-overlay">
