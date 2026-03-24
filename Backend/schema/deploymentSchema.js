@@ -36,9 +36,32 @@ const deploymentSchema = new mongoose.Schema({
   }
 },
 
-    status: { type: String, enum : ['pending', 'running', 'success', 'failure'], default: 'pending'},
+    status: { 
+      type: String, 
+      enum : [
+        'pending',
+        'approved',
+        'running',
+        'success',
+        'failure',
+        'failed',
+        'rejected',
+        'cancelled'
+      ], 
+      default: 'pending'
+    },
     start_time : { type: Date},
-    end_time : { type: Date}
+    end_time : { type: Date},
+   
+stages: [{
+  name: { type: String }, // e.g., "Build", "Unit Test", "SonarQube Scan"
+  status: { 
+    type: String, 
+    enum: ['pending', 'running', 'success', 'failure'], 
+    default: 'pending' 
+  },
+  updated_at: { type: Date, default: Date.now }
+}],
 },
  { timestamps: true }
 );

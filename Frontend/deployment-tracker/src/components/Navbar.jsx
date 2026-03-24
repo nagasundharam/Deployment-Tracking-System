@@ -1,22 +1,18 @@
-import { NavLink } from "react-router-dom";
-import "./Navbar.css";
-import {
+import { NavLink, useNavigate } from "react-router-dom";
+import { 
+  LogOut, 
+  User as UserIcon, 
   LayoutDashboard,
   FolderKanban,
   Rocket,
   Users,
   Layers,
   FileText,
-  Settings
+  Settings 
 } from "lucide-react";
+import "./Navbar.css";
 
-/*
-  Role Definitions:
-  - admin: Full system access
-  - devops: Infra + deployments + environments
-  - developer: Projects + deployments (limited)
-*/
-
+// 1. Move navConfig back into the file so it's defined
 const navConfig = [
   {
     name: "Dashboard",
@@ -62,14 +58,30 @@ const navConfig = [
   }
 ];
 
-function Navbar({ role = "admin" }) {
+function Navbar() {
+  const navigate = useNavigate();
+  
+  // Safely parse user from localStorage
+  const userJson = localStorage.getItem("user");
+  const user = userJson ? JSON.parse(userJson) : null;
+  const role = user?.role || "developer";
+
+  const handleLogout = () => {
+    // Clear session data
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+
+    // Force refresh to login to clear all React states
+    window.location.href = "/login";
+  };
+
+  // 2. This now has access to the navConfig defined above
   const filteredNav = navConfig.filter(item =>
     item.roles.includes(role)
   );
 
   return (
     <aside className="sidebar">
-
       {/* Logo */}
       <div className="logo">
         <div className="logo-icon">🚀</div>
@@ -94,18 +106,35 @@ function Navbar({ role = "admin" }) {
         })}
       </nav>
 
-      {/* Plan Card (Always stays bottom naturally now) */}
+      {/* Profile & Logout Section */}
+      <div className="sidebar-footer">
+        <div className="user-profile">
+          <div className="user-avatar">
+             <UserIcon size={20} color="#6b7280" />
+          </div>
+          <div className="user-info">
+            <p className="user-name">{user?.name || "Guest User"}</p>
+            <p className="user-email">{user?.email || "Not logged in"}</p>
+          </div>
+        </div>
+        
+        <button className="logout-btn" onClick={handleLogout}>
+          <LogOut size={18} />
+          <span>Logout</span>
+        </button>
+      </div>
+
+      {/* Plan Card */}
       <div className="plan-card">
         <p className="plan-label">CURRENT PLAN</p>
         <h3>Enterprise Tier</h3>
-
         <div className="progress-bar">
           <div className="progress-fill"></div>
         </div>
-
         <p className="nodes">750 / 1000 Managed Nodes</p>
       </div>
     </aside>
   );
 }
+
 export default Navbar;

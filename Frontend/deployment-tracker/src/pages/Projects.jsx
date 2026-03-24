@@ -1,237 +1,307 @@
-import { useState } from "react";
-import { Bell, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Filter, Globe, Users as UsersIcon, Calendar, X, Trash2, Edit } from "lucide-react";
 import "./Projects.css";
 
 export default function Projects() {
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: "Alpha-Core-Service",
-      tech: "Node.js • Microservice",
-      repo: "github.com/org/alpha-core",
-      createdBy: "Sarah Miller",
-      date: "2023-10-12",
-      status: "Production",
-    },
-    {
-      id: 2,
-      name: "Marketing-Frontend",
-      tech: "Next.js • UI Kit",
-      repo: "github.com/org/marketing-fe",
-      createdBy: "John Doe",
-      date: "2023-11-05",
-      status: "UAT Failed",
-    },
-  ]);
-
+  const [projects, setProjects] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [sortType, setSortType] = useState("date");
   const [showModal, setShowModal] = useState(false);
+  const [editId, setEditId] = useState(null);
+
+  // Retrieve auth data from localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token"); 
+  const role = user?.role;
 
   const [formData, setFormData] = useState({
     name: "",
-    tech: "",
-    repo: "",
-    createdBy: "",
-    status: "Production",
+    description: "",
+    repo_url: "",
+    members: []
   });
 
-  // 🔹 Handle Input Change
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+// 1. Fetch Projects and Users on Mount
+  useEffect(() => {
+    const fetchData = async () => {
+      // DEBUG: See exactly what is in storage
+      const rawUser = localStorage.getItem("user");
+      const savedToken = localStorage.getItem("token");
+      
+      console.log("Storage Check - User:", rawUser);
+      console.log("Storage Check - Token:", savedToken);
 
-  // 🔹 Create Project
-  const handleCreateProject = (e) => {
-    e.preventDefault();
+      if (!rawUser || !savedToken) {
+        console.error("Fetch aborted: No user or token found in LocalStorage.");
+        return;
+      }
 
-    const newProject = {
-      id: Date.now(),
-      ...formData,
-      date: new Date().toISOString().split("T")[0],
+      const parsedUser = JSON.parse(rawUser);
+      const userId = parsedUser._id || parsedUser.id; // Support both _id and id
+
+      const headers = { 
+        "Authorization": `Bearer ${savedToken}`,
+        "Content-Type": "application/json"
+      };
+
+      try {
+        // Fetch Users
+        const userRes = await fetch("http://localhost:5000/api/users/get", { headers });
+        const userData = await userRes.json();
+        setAvailableUsers(Array.isArray(userData) ? userData : userData.users || []);
+
+        // Fetch Projects
+        const projRes = await fetch(`http://localhost:5000/api/projects/user/${userId}`, { headers });
+        const projData = await projRes.json();
+        setProjects(Array.isArray(projData) ? projData : projData.projects || []);
+
+      } catch (err) {
+        console.error("Network error:", err);
+      }
     };
 
-    setProjects((prev) => [newProject, ...prev]);
+    fetchData();
+  }, []); // Removing dependencies here can sometimes help with initial load
+ const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Safety check: ensure we have the creator ID
+    const creatorId = user?.id || JSON.parse(localStorage.getItem("user"))?.id;
+    console.log(creatorId);
+    
+    if (!creatorId) {
+      alert("User session expired. Please log in again.");
+      return;
+    }
 
-    setFormData({
-      name: "",
-      tech: "",
-      repo: "",
-      createdBy: "",
-      status: "Production",
-    });
+    const url = editId 
+      ? `http://localhost:5000/api/projects/${editId}` 
+      : "http://localhost:5000/api/projects";
+    
+    const method = editId ? "PUT" : "POST";
 
-    setShowModal(false);
+    // Construct the payload to match your backend's expected variables
+    const projectPayload = {
+      name: formData.name,
+      description: formData.description,
+      repo_url: formData.repo_url,
+      members: formData.members,
+      created_by: creatorId // This matches your backend's const { created_by } = req.body
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: method,
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` 
+        },
+        body: JSON.stringify(projectPayload)
+      });
+      
+      const data = await res.json();
+
+      if (res.ok) {
+        if (editId) {
+          setProjects(prev => prev.map(p => p._id === editId ? data.project : p));
+        } else {
+          // data.project is returned from your backend after being populated
+          setProjects(prev => [data.project, ...prev]);
+        }
+        closeModal();
+      } else {
+        alert(data.message || "Something went wrong");
+      }
+    } catch (err) {
+      console.error("Submission Error:", err);
+    }
+  };
+  // 3. Delete Project
+  const handleDelete = async (projectId) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setProjects(prev => prev.filter(p => p._id !== projectId));
+      } else {
+        const data = await res.json();
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error("Delete Error:", err);
+    }
   };
 
-  // 🔹 Sorting
-  const sortedProjects = [...projects].sort((a, b) => {
-    if (sortType === "name") {
-      return a.name.localeCompare(b.name);
-    }
-    if (sortType === "date") {
-      return new Date(b.date) - new Date(a.date);
-    }
-    return 0;
-  });
+  // 4. Modal Management
+  const openEditModal = (project) => {
+    setEditId(project._id);
+    setFormData({
+      name: project.name,
+      description: project.description,
+      repo_url: project.repo_url || "",
+      // Map members to IDs to match checkbox logic
+      members: project.members.map(m => (typeof m === 'object' ? m._id : m))
+    });
+    setShowModal(true);
+  };
 
-  // 🔹 Filtering
-  const filteredProjects = sortedProjects.filter((project) =>
-    project.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const closeModal = () => {
+    setShowModal(false);
+    setEditId(null);
+    setFormData({ name: "", description: "", repo_url: "", members: [] });
+  };
+
+  // 5. Filter and Sort Logic
+  const filteredAndSorted = projects
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortType === "name") return a.name.localeCompare(b.name);
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
   return (
-    <div className="projects-container">
-
-      {/* Header */}
-      <div className="projects-header">
-        <h2>Projects</h2>
-
-        <div className="header-actions">
-         
-          <button
-            className="btn-primary"
-            onClick={() => setShowModal(true)}
-          >
-            <Plus size={16} /> Create Project
+    <div className="projects-page">
+      <header className="page-header">
+        <div className="header-left">
+          <h1>Projects</h1>
+          <p>Manage and monitor your active workspace projects.</p>
+        </div>
+        {(role === "admin" || role === "devops") && (
+          <button className="primary-btn" onClick={() => setShowModal(true)}>
+            <Plus size={18} /> New Project
           </button>
+        )}
+      </header>
+
+      <div className="action-bar">
+        <div className="search-wrapper">
+          <Search size={18} className="search-icon" />
+          <input 
+            placeholder="Search by name..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="filter-group">
+          <Filter size={18} />
+          <select value={sortType} onChange={(e) => setSortType(e.target.value)}>
+            <option value="date">Most Recent</option>
+            <option value="name">A - Z</option>
+          </select>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="toolbar">
-        <input
-          type="text"
-          placeholder="Search projects..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <select
-          value={sortType}
-          onChange={(e) => setSortType(e.target.value)}
-        >
-          <option value="date">Sort by Date</option>
-          <option value="name">Sort by Name</option>
-        </select>
-      </div>
-
-      {/* Table */}
-      <div className="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Project Name</th>
-              <th>Repository</th>
-              <th>Created By</th>
-              <th>Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredProjects.map((project) => (
-              <tr key={project.id}>
-                <td>
-                  <div className="project-info">
-                    <div className="project-icon"></div>
-                    <div>
-                      <p className="project-name">{project.name}</p>
-                      <span className="project-tech">
-                        {project.tech}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td>{project.repo}</td>
-                <td>{project.createdBy}</td>
-                <td>{project.date}</td>
-                <td>
-                  <span
-                    className={`status ${
-                      project.status === "Production"
-                        ? "green"
-                        : "red"
-                    }`}
-                  >
-                    {project.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredProjects.length === 0 && (
-          <p className="no-data">No projects found.</p>
+      <div className="projects-grid">
+        {filteredAndSorted.length > 0 ? (
+          filteredAndSorted.map((project) => (
+            <div key={project._id} className="project-card">
+              <div className="card-header">
+                <h3>{project.name}</h3>
+                <div className="card-actions">
+                  {(role === "admin" || role === "devops") && (
+                    <>
+                      <button className="icon-btn" onClick={() => openEditModal(project)}>
+                        <Edit size={16}/>
+                      </button>
+                      <button className="icon-btn delete" onClick={() => handleDelete(project._id)}>
+                        <Trash2 size={16}/>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <p className="card-desc">{project.description}</p>
+              
+              <div className="card-meta">
+                <div className="meta-item">
+                  <Globe size={14} />
+                  <span>{project.repo_url ? "GitHub linked" : "No Repo"}</span>
+                </div>
+                <div className="meta-item">
+                  <UsersIcon size={14} />
+                  <span>{project.members?.length || 0} Members</span>
+                </div>
+                <div className="meta-item">
+                  <Calendar size={14} />
+                  <span>{new Date(project.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="empty-state">No projects available.</div>
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Create New Project</h3>
-
-            <form onSubmit={handleCreateProject}>
-              <input
-                type="text"
-                name="name"
-                placeholder="Project Name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-
-              <input
-                type="text"
-                name="tech"
-                placeholder="Tech Stack"
-                value={formData.tech}
-                onChange={handleChange}
-                required
-              />
-
-              <input
-                type="text"
-                name="repo"
-                placeholder="Repository URL"
-                value={formData.repo}
-                onChange={handleChange}
-                required
-              />
-
-              <input
-                type="text"
-                name="createdBy"
-                placeholder="Created By"
-                value={formData.createdBy}
-                onChange={handleChange}
-                required
-              />
-
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-              >
-                <option value="Production">Production</option>
-                <option value="UAT Failed">UAT Failed</option>
-              </select>
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Create
+        <div className="glass-modal-overlay">
+          <div className="modern-modal">
+            <div className="modal-top">
+              <h3>{editId ? "Edit Project Details" : "Create New Project"}</h3>
+              <button className="close-btn" onClick={closeModal}><X size={20}/></button>
+            </div>
+            <form onSubmit={handleFormSubmit}>
+              <div className="form-group">
+                <label>Project Name</label>
+                <input 
+                  required 
+                  value={formData.name}
+                  placeholder="e.g. Finance Dashboard" 
+                  onChange={e => setFormData({...formData, name: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <textarea 
+                  rows="3" 
+                  value={formData.description}
+                  placeholder="What is this project about?" 
+                  onChange={e => setFormData({...formData, description: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>Repository URL</label>
+                <input 
+                  value={formData.repo_url}
+                  placeholder="https://github.com/user/repo" 
+                  onChange={e => setFormData({...formData, repo_url: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>Assign Team Members</label>
+                <div className="members-select-box">
+                  {availableUsers.length > 0 ? (
+                    availableUsers.map(u => (
+                      <label key={u._id} className={`member-chip ${formData.members.includes(u._id) ? "selected" : ""}`}>
+                        <input 
+                          type="checkbox" 
+                          hidden
+                          checked={formData.members.includes(u._id)}
+                          onChange={() => {
+                            const members = formData.members.includes(u._id)
+                              ? formData.members.filter(id => id !== u._id)
+                              : [...formData.members, u._id];
+                            setFormData({...formData, members});
+                          }}
+                        />
+                        <span>{u.name}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="no-users-text">No users found to assign.</p>
+                  )}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="secondary-btn" onClick={closeModal}>Cancel</button>
+                <button type="submit" className="primary-btn">
+                  {editId ? "Update Project" : "Create Project"}
                 </button>
               </div>
             </form>

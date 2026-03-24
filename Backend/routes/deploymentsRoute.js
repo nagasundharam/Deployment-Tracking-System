@@ -1,18 +1,31 @@
 const express = require("express");
-const { handleJenkinsWebhook } = require("../controllers/jenkinsController");
-const { getDeploymentDetails } = require("../controllers/deploymentsController");
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
 const router = express.Router();
+const deploymentController = require("../controllers/deploymentsController");
+const { protect } = require("../middleware/authMiddleware");
 
+// --- System Metadata ---
+router.get("/metadata", deploymentController.getMetadata);
+router.get("/stats", deploymentController.getDeploymentStats);
+router.get("/environments/:projectId", deploymentController.getEnvironmentsByProject);
 
+// --- Core CRUD ---
+router.get("/", deploymentController.getDeployments);
+router.post("/", protect, deploymentController.createDeployment);
+router.get("/:id", deploymentController.getDeploymentById);
+router.delete("/:id", protect, deploymentController.deleteDeployment);
 
-router.post("/jenkins-webhook",handleJenkinsWebhook);
+// --- CI/CD Pipeline Control ---
+// Overall status update
+router.patch("/:id/status", protect, deploymentController.updateDeploymentStatus);
+// Update a specific stage (e.g., Build stage finished)
+router.patch("/:id/stage", protect, deploymentController.updateStageStatus);
+// Trigger a rollback
+router.post("/:id/rollback", protect, deploymentController.rollbackDeployment);
 
-router.get("/deployment-details",protect,authorizeRoles("admin","devops") ,getDeploymentDetails);
+// --- Monitoring ---
+router.get("/:id/logs", deploymentController.getDeploymentLogs);
 
-// router.get("/all-deployment-details",protect,authorizeRoles("admin") ,getAllDeploymentDetails);
-
-
+// --- Reporting ---
+router.get("/:id/report", protect, deploymentController.exportDeploymentReport);
 
 module.exports = router;

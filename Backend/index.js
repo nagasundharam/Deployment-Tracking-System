@@ -9,6 +9,8 @@ const {protect} = require("./middleware/authMiddleware");
 const authRoutes = require("./routes/authRoute");
 const { authorizeRoles } = require("./middleware/roleMiddleware");
 const deploymentRoutes = require("./routes/deploymentsRoute");
+const environmentRoutes = require("./routes/environmentRoutes");
+const userRoute = require("./routes/userRoutes");
 
 // import express from 'express';
 // import cors from 'cors';
@@ -17,6 +19,11 @@ const deploymentRoutes = require("./routes/deploymentsRoute");
 // import { User } from './schema/userSchema.js';
 // import seed from './seed.js';
 const app = express();
+const projectRoute = require("./routes/projectsRoute");
+const logsRoute = require("./routes/logRoutes");
+
+
+
 
 
 
@@ -26,8 +33,15 @@ app.use(cors());
 app.use(express.json());
 
 // app.use("/",)
+app.use("/api/projects",projectRoute );
 app.use("/api/auth", authRoutes);
 app.use("/api/deployments",deploymentRoutes);
+app.use("/api/users",userRoute);
+app.use("/api/environments", environmentRoutes);
+app.use("/api/deployments", deploymentRoutes);
+
+// Logs Module
+app.use("/api/logs", logsRoute);
 
 app.use("/",protect,authorizeRoles("admin") ,(req,res) => {
     res.send("Protected Route Accessed");

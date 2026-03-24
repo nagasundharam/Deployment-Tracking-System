@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
     const authHeader = req.headers.authorization;
 
     if(!authHeader || !authHeader.startsWith("Bearer ")){
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Bearer token required" });
     }
 
     const token = authHeader.split(" ")[1];
@@ -14,8 +14,9 @@ const jwt = require("jsonwebtoken");
         req.user = decoded;
         next();
     }catch(error) {
+        
 
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: "Login Timeout Login again" });
     }
     }
 

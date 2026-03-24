@@ -39,6 +39,11 @@ const register = async (req, res)=> {
         if( !user){
             return res.status(400).json({ message: "Invalid Username" });
         }
+        
+        // If the account is blocked, prevent login
+        if (user.isBlocked) {
+            return res.status(403).json({ message: "Your account has been blocked by the administrator." });
+        }
         if(! email){
             return res.status(400).json({ message: "Invalid Email" });
         }

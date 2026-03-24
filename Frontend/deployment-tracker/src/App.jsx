@@ -5,6 +5,10 @@ import {
   RouterProvider
 } from "react-router-dom";
 
+import ProtectedRoute from "./components/ProtectedRoute"; 
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
 import Layout from "./layout/Layout";
 import PageLayout from "./layout/PageLayout";
 import Dashboard from "./pages/Dashboard";
@@ -19,6 +23,10 @@ import DeploymentDetails from "./pages/DeploymentsDetails";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
+    <>
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+    <Route element={<ProtectedRoute />}>
     <Route path="/" element={<Layout />} errorElement={<ErrorPage />}>
       
       <Route element={<PageLayout />}>
@@ -32,8 +40,10 @@ const router = createBrowserRouter(
         <Route path="audit-logs" element={<AuditLogs />} />
         <Route path="settings" element={<Settings />} />
       </Route>
+      </Route>
 
     </Route>
+    </>
   )
 );
 

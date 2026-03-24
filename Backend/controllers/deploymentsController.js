@@ -1,41 +1,301 @@
-exports.getDeploymentDetails = async (req, res) => {
-    try {
-        const { project_id, environment_id } = req.query;  
-        if(project_id && environment_id){
-        const deployments = await Deployment.find({ project_id, environment_id }).sort({ createdAt: -1 });
-        res.json(deployments);
-    } else {
-        res.status(400).json({ message: "Missing required query parameters" });
-    }
-    } catch (error) {
-        console.error("Error fetching deployment details:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }           
-}; 
-exports.getAllDeploymentDetails = async (req, res) => {
-    try {
-        const deployments = await Deployment.find().sort({ createdAt: -1 });   
-        
-        res.json(deployments);
-    } catch (error) {   
-        console.error("Error fetching deployment details:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+const { Deployment } = require("../schema/deploymentSchema");
+const { Project } = require("../schema/projectSchema");
+const { Environment } = require("../schema/environmentSchema");
+const { User } = require("../schema/userSchema");
+const { DeploymentLogs } = require("../schema/deploymentLogsSchema");
+const { runPipelineForDeployment } = require("../simulator");
+const { buildDeploymentReport, toCSV } = require("../utils/reportBuilder");
+const mongoose = require("mongoose");
+const PDFDocument = require("pdfkit");
+
+// --- METADATA & HELPER HANDLERS ---
+
+// Get projects and devops users for dropdowns
+exports.getMetadata = async (req, res) => {
+  try {
+    const projects = await Project.find().select("name _id");
+    const devops = await User.find({ role: "devops" }).select("name _id");
+    res.json({ projects, devops });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
-// exports.getDeploymentDetailsById = async (req, res) => {
-//     try {
-//         const { id } = req.params;  
-//         const deployment = await Deployment.findById(id);
-//         if (deployment) {
-//             res.json(deployment);   
-//         } else {    
-//             res.status(404).json({ message: "Deployment not found" });
-//         }
-//     } catch (error) {
-//         console.error("Error fetching deployment details:", error);
-//         res.status(500).json({ message: "Internal server error" });
-//     }       
-// };
 
+// Get specific environments linked to a project
+exports.getEnvironmentsByProject = async (req, res) => {
+  try {
+    const environments = await Environment.find({ project_id: req.params.projectId });
+    res.json(environments);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
- 
+// Dashboard Stats (Count by status)
+exports.getDeploymentStats = async (req, res) => {
+  try {
+    const stats = await Deployment.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+    ]);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// --- CORE CRUD HANDLERS ---
+
+exports.createDeployment = async (req, res) => {
+  try {
+    const { project_id, environment_id, version, branch, triggered_by, pipeline_id } = req.body;
+
+    const defaultStages = [
+      { name: "Source Code Analysis", status: "pending" },
+      { name: "Container Build", status: "pending" },
+      { name: "Security Scan", status: "pending" },
+      { name: "Artifact Deployment", status: "pending" }
+    ];
+
+    const deployment = new Deployment({
+      project_id,
+      environment_id,
+      pipeline_id: pipeline_id || new mongoose.Types.ObjectId(),
+      version,
+      branch,
+      triggered_by: {
+        source: triggered_by?.source || "manual",
+        username: triggered_by?.username,
+        user_id: req.user?._id || triggered_by?.user_id, // From protect middleware
+      },
+      status: "pending",
+      stages: defaultStages,
+    });
+
+    const saved = await deployment.save();
+    
+    // Update Environment status
+    await Environment.findByIdAndUpdate(environment_id, { 
+        status: "pending", 
+        last_deployment: saved._id 
+    });
+
+    res.status(201).json(saved);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+exports.getDeployments = async (req, res) => {
+  try {
+    const deployments = await Deployment.find()
+      .populate("project_id", "name")
+      .populate("environment_id", "name")
+      .sort({ createdAt: -1 });
+    res.json(deployments);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getDeploymentById = async (req, res) => {
+  try {
+    const deployment = await Deployment.findById(req.params.id)
+      .populate("project_id")
+      .populate("environment_id")
+      .populate("triggered_by.user_id", "name");
+    if (!deployment) return res.status(404).json({ message: "Not found" });
+    res.json(deployment);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.deleteDeployment = async (req, res) => {
+  try {
+    await Deployment.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// --- CI/CD PIPELINE CONTROL HANDLERS ---
+
+// Update overall status (running, success, failure)
+exports.updateDeploymentStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowedStatuses = [
+      "pending",
+      "approved",
+      "running",
+      "success",
+      "failure",
+      "failed",
+      "rejected",
+      "cancelled",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid deployment status" });
+    }
+
+    // Prevent creators from approving their own deployments.
+    if (status === "approved") {
+      const requesterRole = req.user?.role;
+      const requesterId = req.user?.id;
+
+      if (!["admin", "devops"].includes(requesterRole)) {
+        return res.status(403).json({
+          message: "Only admin or devops users can approve deployments",
+        });
+      }
+
+      const deployment = await Deployment.findById(req.params.id).select(
+        "triggered_by.user_id"
+      );
+
+      if (!deployment) {
+        return res.status(404).json({ message: "Deployment not found" });
+      }
+
+      const creatorId = deployment.triggered_by?.user_id?.toString();
+
+      if (creatorId && creatorId === requesterId) {
+        return res.status(403).json({
+          message:
+            "Creators cannot approve their own deployments. Another admin or devops engineer must approve.",
+        });
+      }
+    }
+
+    const updateData = { status };
+    
+    if (status === "running") updateData.start_time = new Date();
+    if (status === "success" || status === "failure" || status === "failed") {
+      updateData.end_time = new Date();
+    }
+
+    const updated = await Deployment.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
+    // When a deployment moves to running via manual trigger, invoke simulator
+    if (status === "running") {
+      runPipelineForDeployment(updated._id.toString());
+    }
+
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Update a specific stage inside the array (e.g., mark "Build" as success)
+exports.updateStageStatus = async (req, res) => {
+  try {
+    const { stageName, status } = req.body;
+    const updated = await Deployment.findOneAndUpdate(
+      { _id: req.params.id, "stages.name": stageName },
+      { $set: { "stages.$.status": status, "stages.$.updated_at": new Date() } },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Rollback: Creates a new deployment based on an old one
+exports.rollbackDeployment = async (req, res) => {
+  try {
+    const original = await Deployment.findById(req.params.id);
+    const rollback = new Deployment({
+      ...original.toObject(),
+      _id: new mongoose.Types.ObjectId(),
+      version: `${original.version}-rollback`,
+      status: "pending",
+      stages: original.stages.map(s => ({ ...s, status: "pending" })),
+      createdAt: new Date()
+    });
+    await rollback.save();
+    res.status(201).json(rollback);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// --- MONITORING HANDLERS ---
+
+exports.getDeploymentLogs = async (req, res) => {
+  try {
+    const logs = await DeploymentLogs.find({ deployment_id: req.params.id }).sort({ timestamp: 1 });
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// --- REPORTING ---
+
+exports.exportDeploymentReport = async (req, res) => {
+  try {
+    const format = (req.query.format || "pdf").toLowerCase();
+    const report = await buildDeploymentReport(req.params.id);
+
+    if (format === "csv") {
+      const csv = toCSV(report);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="deployment-${req.params.id}.csv"`
+      );
+      return res.send(csv);
+    }
+
+    // Generate a simple but valid PDF using pdfkit
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="deployment-${req.params.id}.pdf"`
+    );
+
+    const doc = new PDFDocument({ margin: 40 });
+    doc.pipe(res);
+
+    // Title
+    doc.fontSize(18).text("Deployment Report", { align: "center" });
+    doc.moveDown();
+
+    // Basic deployment info
+    doc.fontSize(12);
+    doc.text(`Project: ${report.deploymentInfo.projectName || ""}`);
+    doc.text(`Environment: ${report.deploymentInfo.environment || ""}`);
+    doc.text(`Version: ${report.deploymentInfo.version || ""}`);
+    doc.text(`Status: ${report.deploymentInfo.status || ""}`);
+    doc.moveDown();
+
+    // Pipeline execution section
+    doc.fontSize(14).text("Pipeline Execution", { underline: true });
+    doc.moveDown(0.5);
+    report.pipelineExecution.forEach((s) => {
+      doc
+        .fontSize(12)
+        .text(
+          `• ${s.stage} - ${s.status}${s.startTime ? ` (${s.startTime})` : ""}`
+        );
+    });
+    doc.moveDown();
+
+    // Logs section
+    if (report.logs && report.logs.length) {
+      doc.fontSize(14).text("Logs", { underline: true });
+      doc.moveDown(0.5);
+      report.logs.forEach((line) => {
+        doc.fontSize(10).text(line);
+      });
+    }
+
+    doc.end();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

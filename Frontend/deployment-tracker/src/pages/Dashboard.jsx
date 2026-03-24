@@ -2,6 +2,8 @@ import { Bell, Plus } from "lucide-react";
 import "./Dashboard.css";
 
 export default function Dashboard() {
+  const user = JSON.parse(localStorage.getItem("user"));
+    
   return (
     <div className="dashboard">
 
@@ -23,8 +25,8 @@ export default function Dashboard() {
     </div>
 
     <div className="user-info">
-      <p className="name">Alex Rivera</p>
-      <p className="role">System Admin</p>
+      <p className="name">{user?.name || "Admin"}</p>
+      <p className="role">{user?.role || "Administrator"}</p>
     </div>
   </div>
 </div>
