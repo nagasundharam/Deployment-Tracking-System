@@ -1,5 +1,9 @@
 pipeline {
     agent any
+ 
+    environment {
+        MONGO_URI = credentials('MONGO_URI')
+    }
 
     options {
         // Stop the build if it takes longer than 15 minutes
