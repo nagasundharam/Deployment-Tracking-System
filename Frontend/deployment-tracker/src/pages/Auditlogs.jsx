@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import "./AuditLogs.css";
+import "./Auditlogs.css";
 import { api } from "../services/api";
 
 export default function AuditLogs() {
