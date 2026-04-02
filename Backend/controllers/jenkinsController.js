@@ -31,32 +31,32 @@ exports.handleJenkinsWebhook = async (req, res) => {
         const newDeployment = await Deployment.create({
             project_id,
             environment_id,
-            pipeline_id: pipeline_id || "jenkins-" + Date.now(), // Fallback if not provided
+            pipeline_id: pipeline_id || "jenkins-" + Date.now(),
             version,
             branch,
             triggered_by: {
-                source: 'github',
+                source: 'jenkins',
                 username: triggered_by?.username || "Jenkins",
                 user_id: userId
             },
-            status: 'success', // Assuming the webhook is called at the end for now
-            start_time: new Date(), // We don't have start_time from this simple webhook yet
+            status: 'success',
+            start_time: new Date(),
             end_time: new Date(),
             commit_message,
             commit_author,
             commit_author_email,
             commit_hash,
             stages: [
-                { name: "Checkout", status: "success" },
-                { name: "Build Frontend", status: "success" },
+                { name: "Checkout & Metadata", status: "success" },
+                { name: "Install & Build", status: "success" },
                 { name: "Deploy Frontend", status: "success" },
-                { name: "Deploy Backend", status: "success" }
+                { name: "Update Tracker API", status: "success" }
             ]
         });
 
         // Update Environment status
         await Environment.findByIdAndUpdate(environment_id, { 
-            status: "success", 
+            status: "Online", 
             last_deployment: newDeployment._id 
         });
 

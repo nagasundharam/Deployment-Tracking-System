@@ -15,6 +15,8 @@ const environmentSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"
         },
+        status: { type: String, default: "Offline" },
+        last_deployment: { type: mongoose.Schema.Types.ObjectId, ref: "Deployment" },
         created_at : { type : Date, default: Date.now}
 
 

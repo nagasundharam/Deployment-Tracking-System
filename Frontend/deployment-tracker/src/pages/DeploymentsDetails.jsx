@@ -334,6 +334,49 @@ const DeploymentDetails = () => {
             </div>
           </div>
 
+          <div className="card jenkins-config-card">
+            <div className="card-header">
+              <h3>Jenkins configuration</h3>
+              <span className="badge-devops">DEVOPS ONLY</span>
+            </div>
+            <p className="card-subtitle">Use these details to configure your Jenkins credentials and pipeline.</p>
+            
+            <div className="config-grid">
+              <div className="config-item">
+                <label>PROJECT_ID</label>
+                <div className="copy-input">
+                  <input readOnly value={deployment.project_id?._id || deployment.project_id} />
+                  <button onClick={() => {
+                    navigator.clipboard.writeText(deployment.project_id?._id || deployment.project_id);
+                    alert("Project ID copied!");
+                  }}>Copy</button>
+                </div>
+              </div>
+
+              <div className="config-item">
+                <label>ENVIRONMENT_ID</label>
+                <div className="copy-input">
+                  <input readOnly value={deployment.environment_id?._id || deployment.environment_id} />
+                  <button onClick={() => {
+                    navigator.clipboard.writeText(deployment.environment_id?._id || deployment.environment_id);
+                    alert("Environment ID copied!");
+                  }}>Copy</button>
+                </div>
+              </div>
+
+              <div className="config-item wide">
+                <label>WEBHOOK URL (POST)</label>
+                <div className="copy-input">
+                  <input readOnly value={`http://${window.location.hostname}:5000/api/jenkins-webhook`} />
+                  <button onClick={() => {
+                    navigator.clipboard.writeText(`http://${window.location.hostname}:5000/api/jenkins-webhook`);
+                    alert("Webhook URL copied!");
+                  }}>Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {deployment.status === "pending" && (
             <div className="card approval-card animate-pulse">
               <h3>Awaiting Manual Gate</h3>

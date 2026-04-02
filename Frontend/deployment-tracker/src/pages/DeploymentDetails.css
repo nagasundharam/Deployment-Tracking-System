@@ -266,3 +266,83 @@
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 } 
+
+/* Jenkins Config Card Styles */
+.jenkins-config-card {
+  border-left: 4px solid #2563eb;
+  background: #f8fafc;
+}
+
+.jenkins-config-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.badge-devops {
+  background: #2563eb;
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.config-grid .wide {
+  grid-column: span 2;
+}
+
+.config-item label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.copy-input {
+  display: flex;
+  gap: 8px;
+}
+
+.copy-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  background: white;
+  color: #1e293b;
+}
+
+.copy-input button {
+  padding: 8px 16px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-input button:hover {
+  background: #cbd5e1;
+  color: #1e293b;
+}

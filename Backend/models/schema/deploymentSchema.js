@@ -13,10 +13,9 @@ const deploymentSchema = new mongoose.Schema({
 
 
     },
-    pipeline_id : { 
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "Pipeline",
-        required: true
+    pipeline_id: { 
+        type: String, 
+        required: true 
     },
     version : { type: String, required: true},
     branch: String,
