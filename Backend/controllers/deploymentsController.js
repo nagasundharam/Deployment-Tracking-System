@@ -1,8 +1,8 @@
-const { Deployment } = require("../schema/deploymentSchema");
-const { Project } = require("../schema/projectSchema");
-const { Environment } = require("../schema/environmentSchema");
-const { User } = require("../schema/userSchema");
-const { DeploymentLogs } = require("../schema/deploymentLogsSchema");
+const { Deployment } = require("../models/schema/deploymentSchema");
+const { Project } = require("../models/schema/projectSchema");
+const { Environment } = require("../models/schema/environmentSchema");
+const { User } = require("../models/schema/userSchema");
+const { DeploymentLogs } = require("../models/schema/deploymentLogsSchema");
 const { runPipelineForDeployment } = require("../simulator");
 const { buildDeploymentReport, toCSV } = require("../utils/reportBuilder");
 const mongoose = require("mongoose");
@@ -110,12 +110,57 @@ exports.getDeploymentById = async (req, res) => {
   }
 };
 
+const { createAuditEntry } = require("./auditLogController");
+
 exports.deleteDeployment = async (req, res) => {
   try {
-    await Deployment.findByIdAndDelete(req.params.id);
+    const deployment = await Deployment.findByIdAndDelete(req.params.id)
+      .populate("project_id", "name")
+      .populate("environment_id", "name");
+    
+    if (!deployment) return res.status(404).json({ message: "Not found" });
+
+    // Log the deletion
+    await createAuditEntry(req.user?._id || req.user?.id, "Deleted Deployment Record", `Version: ${deployment.version} (Project: ${deployment.project_id?.name})`, req.ip);
+
     res.json({ message: "Deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateDeployment = async (req, res) => {
+  try {
+    const { version, branch, status } = req.body;
+
+    // Fetch old version for comparison
+    const oldDep = await Deployment.findById(req.params.id)
+      .populate("project_id", "name");
+
+    if (!oldDep) return res.status(404).json({ message: "Deployment not found" });
+
+    const updated = await Deployment.findByIdAndUpdate(
+      req.params.id,
+      { version, branch, status, updatedAt: Date.now() },
+      { new: true }
+    ).populate("project_id", "name").populate("environment_id", "name");
+
+    if (!updated) return res.status(404).json({ message: "Deployment not found" });
+
+    // Identify changed fields
+    let changes = [];
+    if (oldDep.version !== updated.version) changes.push(`Version: "${oldDep.version}" → "${updated.version}"`);
+    if (oldDep.branch !== updated.branch) changes.push(`Branch: "${oldDep.branch}" → "${updated.branch}"`);
+    if (oldDep.status !== updated.status) changes.push(`Status: "${oldDep.status}" → "${updated.status}"`);
+
+    const changeMsg = changes.length > 0 ? `Modified: ${changes.join(", ")}` : "Modified Deployment Record";
+
+    // Log the detailed update
+    await createAuditEntry(req.user?._id || req.user?.id, changeMsg, `Project: ${updated.project_id?.name} (V: ${updated.version})`, req.ip);
+
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 

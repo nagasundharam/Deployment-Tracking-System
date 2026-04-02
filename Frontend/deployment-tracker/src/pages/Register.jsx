@@ -38,42 +38,53 @@ export default function Register() {
 
   return (
     <div className="auth-wrapper">
+
       <div className="auth-card">
-        <h2>Create Account 🚀</h2>
+        <div className="logo-icon-auth">🚀</div>
+        <h2>Create Account</h2>
         <p>Register to get started</p>
 
         {error && <p className="error">{error}</p>}
 
         <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="username"
-            placeholder="Enter username"
-            onChange={handleChange}
-            required
-          />
+          <div className="input-group">
+            <label>Username</label>
+            <input
+              type="text"
+              name="username"
+              placeholder="johndoe"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter email"
-            onChange={handleChange}
-            required
-          />
+          <div className="input-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="name@company.com"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Create password"
-            onChange={handleChange}
-            required
-          />
+          <div className="input-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Create a strong password"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <button type="submit">Register</button>
+          <button type="submit">Sign Up</button>
         </form>
 
         <div className="auth-footer">
-          Already have an account? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login">Log in</Link>
         </div>
       </div>
     </div>

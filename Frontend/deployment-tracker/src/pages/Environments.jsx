@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Environment.css";
+import { api } from "../services/api";
 
 const Environments = () => {
   // --- 1. DATA STATES (Initialized from LocalStorage for instant UI) ---
@@ -16,64 +17,60 @@ const Environments = () => {
   const [showModal, setShowModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Parse user for RBAC
+  const userJson = localStorage.getItem("user");
+  const user = userJson ? JSON.parse(userJson) : null;
+  const role = (user?.role || "developer").toLowerCase();
+
   // --- 2. FORM STATE ---
   const [form, setForm] = useState({
     name: "development",
     project_id: "",
   });
 
-  const getHeaders = useCallback(() => ({
-    "Authorization": `Bearer ${localStorage.getItem("token")}`,
-    "Content-Type": "application/json"
-  }), []);
 
   // --- 3. HIGH-SPEED FETCHING (Parallel + No-Crash Logic) ---
   const fetchInitialData = useCallback(async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const userId = user?.id || user?._id;
-      const headers = getHeaders();
+    const userId = user?._id || user?.id;
+    if (!userId) return;
 
-      if (!userId) return;
+    try {
       setIsRefreshing(true);
 
+      // If admin, fetch ALL projects, otherwise fetch user's projects
+      const projectEndpoint = role === "admin" ? "/projects" : `/projects/user/${userId}`;
+
       // Fire both API calls at exactly the same time
-      const [envRes, projRes] = await Promise.all([
-        fetch("http://localhost:5000/api/environments", { headers }),
-        fetch(`http://localhost:5000/api/projects/user/${userId}`, { headers })
-      ]);
-
-      // Check if responses are actually JSON before parsing to avoid "Unexpected token P"
-      const parseJson = async (res) => {
-        const contentType = res.headers.get("content-type");
-        if (res.ok && contentType?.includes("application/json")) {
-          return res.json();
-        }
-        return null; // Silent fail for bad responses
-      };
-
       const [envData, projData] = await Promise.all([
-        parseJson(envRes),
-        parseJson(projRes)
+        api.get("/environments"),
+        api.get(projectEndpoint)
       ]);
 
       // Update states and Caches if data is valid
       if (Array.isArray(envData)) {
+        console.log("Environments Synced:", envData);
         setEnvironments(envData);
         localStorage.setItem("cache_envs", JSON.stringify(envData));
       }
       if (Array.isArray(projData)) {
+        console.log("Projects Synced:", projData);
         setProjects(projData);
         localStorage.setItem("cache_projs", JSON.stringify(projData));
       }
 
     } catch (err) {
       console.error("Infrastructure Sync Error:", err);
+      // Optional: Handle unauthorized access explicitly
+      if (err.message.includes("401")) {
+         localStorage.removeItem("user");
+         localStorage.removeItem("token");
+         window.location.href = "/login";
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [getHeaders]);
+  }, [user?._id, user?.id]);
 
   useEffect(() => {
     fetchInitialData();
@@ -83,22 +80,13 @@ const Environments = () => {
   const handleCreateEnvironment = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/environments", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(form),
-      });
-
-      if (res.ok) {
-        fetchInitialData(); // Background refresh
-        setShowModal(false);
-        setForm({ name: "development", project_id: "" });
-      } else {
-        const errorData = await res.json().catch(() => ({ message: "Server error" }));
-        alert(errorData.message);
-      }
+      await api.post("/environments", form);
+      fetchInitialData(); // Background refresh
+      setShowModal(false);
+      setForm({ name: "development", project_id: "" });
     } catch (err) {
       console.error("Creation error:", err);
+      alert(err.message);
     }
   };
 
@@ -117,14 +105,16 @@ const Environments = () => {
       <header className="env-header">
         <div className="header-text">
           <h1>
-            Cloud Environments 
+            Cloud Environments
             {isRefreshing && <span className="sync-indicator">Refreshing...</span>}
           </h1>
           <p>Real-time health and status of your deployment clusters.</p>
         </div>
-        <button className="primary-btn" onClick={() => setShowModal(true)}>
-          <span className="plus">+</span> New Environment
-        </button>
+        {(role === "admin" || role === "devops") && (
+          <button className="primary-btn" onClick={() => setShowModal(true)}>
+            <span className="plus">+</span> New Environment
+          </button>
+        )}
       </header>
 
       <div className="env-grid">
@@ -176,9 +166,9 @@ const Environments = () => {
             <form onSubmit={handleCreateEnvironment}>
               <div className="form-group">
                 <label>Target Project</label>
-                <select 
-                  value={form.project_id} 
-                  onChange={(e) => setForm({...form, project_id: e.target.value})} 
+                <select
+                  value={form.project_id}
+                  onChange={(e) => setForm({ ...form, project_id: e.target.value })}
                   required
                 >
                   <option value="">-- Select Project --</option>
@@ -190,9 +180,9 @@ const Environments = () => {
 
               <div className="form-group">
                 <label>Environment Tier</label>
-                <select 
-                  value={form.name} 
-                  onChange={(e) => setForm({...form, name: e.target.value})}
+                <select
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                 >
                   <option value="development">Development</option>
                   <option value="testing">Testing</option>

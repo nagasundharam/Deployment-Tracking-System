@@ -1,35 +1,37 @@
 import { Bell, Plus } from "lucide-react";
 import "./Dashboard.css";
 
-export default function Dashboard() {
-  const user = JSON.parse(localStorage.getItem("user"));
-    
+export default function Dashboard() { // For RBAC elements
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const role = (user?.role || "developer").toLowerCase();
+
   return (
     <div className="dashboard">
 
       {/* Top Bar */}
       <div className="topbar">
-  <div className="search-wrapper">
-    <span className="search-icon">🔍</span>
-    <input
-      type="text"
-      placeholder="Search projects, deployments, or users..."
-      className="search"
-    />
-  </div>
+        <div className="search-wrapper">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search projects, deployments, or users..."
+            className="search"
+          />
+        </div>
 
-  <div className="profile">
-    <div className="notification">
-      <Bell size={18} />
-      <span className="dot"></span>
-    </div>
+        <div className="profile">
+          <div className="notification">
+            <Bell size={18} />
+            <span className="dot"></span>
+          </div>
 
-    <div className="user-info">
-      <p className="name">{user?.name || "Admin"}</p>
-      <p className="role">{user?.role || "Administrator"}</p>
-    </div>
-  </div>
-</div>
+          <div className="user-info">
+            <p className="name">{user?.name || "Admin"}</p>
+            <p className="role">{user?.role || "Administrator"}</p>
+          </div>
+        </div>
+      </div>
 
 
       {/* Main Content */}
@@ -42,8 +44,9 @@ export default function Dashboard() {
             <p>Monitor system performance and deployment activity.</p>
           </div>
 
-          <button className="primary-btn">
-            <Plus size={16} /> New Deployment
+          <button className="btn-primary">
+            <Plus size={18} style={{ marginRight: '4px' }} />
+            New Deployment
           </button>
         </div>
 

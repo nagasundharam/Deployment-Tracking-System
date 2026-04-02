@@ -1,9 +1,9 @@
 /* ===== Layout ===== */
 .audit-container {
-  padding: 30px;
-  font-family: "Inter", sans-serif;
-  background: #f5f7fb;
+  padding: 32px;
+  font-family: 'Inter', sans-serif;
   min-height: 100vh;
+  animation: fadeIn 0.4s ease forwards;
 }
 
 /* ===== Header ===== */
@@ -11,159 +11,217 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 24px;
 }
 
 .audit-title {
-  font-size: 22px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.025em;
 }
 
 .export-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-weight: 500;
-  transition: 0.2s ease;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .export-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* ===== Filter Section ===== */
 .audit-filters {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 24px;
+  border-radius: var(--radius-xl);
   display: flex;
-  gap: 15px;
+  gap: 16px;
   align-items: center;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  flex-wrap: wrap;
 }
 
 .audit-filters input,
 .audit-filters select {
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  font-size: 0.95rem;
   outline: none;
-  transition: 0.2s;
+  background: white;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  flex: 1;
+  min-width: 200px;
 }
 
 .audit-filters input:focus,
 .audit-filters select:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
 }
 
 /* ===== Table ===== */
 .audit-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
-  border-radius: 10px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  text-align: left;
 }
 
 .audit-table thead {
-  background: #f9fafb;
+  background: rgba(249, 250, 251, 0.5);
 }
 
 .audit-table th {
-  text-align: left;
-  padding: 14px;
-  font-size: 13px;
+  padding: 16px 24px;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-muted);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .audit-table td {
-  padding: 14px;
-  font-size: 14px;
-  color: #374151;
-  border-top: 1px solid #f1f5f9;
+  padding: 16px 24px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-fast);
 }
 
-.audit-table tbody tr:hover {
-  background: #f9fafb;
+.audit-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.audit-table tbody tr:hover td {
+  background: rgba(79, 70, 229, 0.03);
 }
 
 /* ===== Action Badges ===== */
 .badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
   display: inline-block;
+  white-space: nowrap;
 }
 
 .badge-delete {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
 }
 
 .badge-update {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-info);
 }
 
 .badge-login {
-  background: #e5e7eb;
-  color: #374151;
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-muted);
 }
 
 .badge-deploy {
-  background: #dcfce7;
-  color: #15803d;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
 }
 
 .badge-modify {
-  background: #fef3c7;
-  color: #b45309;
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
 }
 
 /* ===== Pagination ===== */
 .pagination {
-  margin-top: 20px;
+  margin-top: 32px;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 16px;
 }
 
 .page-btn {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
   background: white;
+  color: var(--text-main);
   cursor: pointer;
-  font-size: 14px;
-  transition: 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .page-btn:hover {
-  background: #f3f4f6;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .page-btn.active {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 /* ===== Empty State ===== */
 .no-data {
   text-align: center;
-  padding: 25px;
-  color: #6b7280;
-  font-size: 14px;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* ===== User Info Cell ===== */
+.user-info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-info-cell strong {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.user-email-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+code {
+  background: rgba(107, 114, 128, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* ===== Responsive ===== */
@@ -171,6 +229,11 @@
   .audit-filters {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .audit-filters input,
+  .audit-filters select {
+    width: 100%;
   }
 
   .pagination {

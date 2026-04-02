@@ -2,70 +2,48 @@ import React, { useState, useMemo, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "./AuditLogs.css";
-
-const mockData = [
-  {
-    id: 1,
-    timestamp: "2023-11-12T14:22:31",
-    user: "Sarah Miller",
-    action: "Deleted Project",
-    resource: "Alpha-Legacy-Service",
-    ip: "192.168.1.104",
-  },
-  {
-    id: 2,
-    timestamp: "2023-11-12T13:05:12",
-    user: "John Doe",
-    action: "Updated API Key",
-    resource: "Staging-Secret-01",
-    ip: "204.22.1.88",
-  },
-  {
-    id: 3,
-    timestamp: "2023-11-11T22:45:00",
-    user: "System Process",
-    action: "Auto-Deployment",
-    resource: "Marketing-Frontend",
-    ip: "internal-vpc-02",
-  },
-  {
-    id: 4,
-    timestamp: "2023-11-11T09:12:44",
-    user: "David Chen",
-    action: "User Login",
-    resource: "Session-3921",
-    ip: "45.122.90.12",
-  },
-  {
-    id: 5,
-    timestamp: "2023-11-11T08:00:21",
-    user: "Emily Watson",
-    action: "Modified Permissions",
-    resource: "RBAC Group: Developers",
-    ip: "82.33.151.4",
-  },
-];
+import { api } from "../services/api";
 
 export default function AuditLogs() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [userFilter, setUserFilter] = useState("All Users");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
-  const uniqueUsers = ["All Users", ...new Set(mockData.map((d) => d.user))];
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const data = await api.get("/audit-logs");
+        setLogs(data);
+      } catch (err) {
+        console.error("Failed to fetch audit logs:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, []);
+
+  const uniqueUsers = useMemo(() => {
+    const users = logs.map((d) => d.user?.name || "System");
+    return ["All Users", ...new Set(users)];
+  }, [logs]);
 
   const filteredData = useMemo(() => {
-    return mockData.filter((item) => {
+    return logs.filter((item) => {
+      const userName = item.user?.name || "System";
       const matchSearch =
-        item.user.toLowerCase().includes(search.toLowerCase()) ||
+        userName.toLowerCase().includes(search.toLowerCase()) ||
         item.action.toLowerCase().includes(search.toLowerCase()) ||
         item.resource.toLowerCase().includes(search.toLowerCase());
 
       const matchUser =
-        userFilter === "All Users" || item.user === userFilter;
+        userFilter === "All Users" || userName === userFilter;
 
       const itemDate = new Date(item.timestamp);
       const matchStart = startDate ? itemDate >= new Date(startDate) : true;
@@ -75,7 +53,7 @@ export default function AuditLogs() {
 
       return matchSearch && matchUser && matchStart && matchEnd;
     });
-  }, [search, startDate, endDate, userFilter]);
+  }, [logs, search, startDate, endDate, userFilter]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -99,7 +77,7 @@ export default function AuditLogs() {
       head: [["Timestamp", "User", "Action", "Resource", "IP Address"]],
       body: filteredData.map((item) => [
         new Date(item.timestamp).toLocaleString(),
-        item.user,
+        item.user?.name || "System",
         item.action,
         item.resource,
         item.ip,
@@ -111,12 +89,16 @@ export default function AuditLogs() {
 
   const getBadgeClass = (action) => {
     if (action.includes("Delete")) return "badge badge-delete";
-    if (action.includes("Update")) return "badge badge-update";
+    if (action.includes("Update") || action.includes("Modified")) return "badge badge-update";
     if (action.includes("Login")) return "badge badge-login";
     if (action.includes("Deployment")) return "badge badge-deploy";
     if (action.includes("Modified")) return "badge badge-modify";
     return "badge";
   };
+
+  if (loading) {
+    return <div className="loader-full"><div className="spinner"></div><p>Retrieving Compliance Logs...</p></div>;
+  }
 
   return (
     <div className="audit-container">
@@ -175,16 +157,21 @@ export default function AuditLogs() {
         <tbody>
           {paginatedData.length > 0 ? (
             paginatedData.map((item) => (
-              <tr key={item.id}>
+              <tr key={item._id}>
                 <td>{new Date(item.timestamp).toLocaleString()}</td>
-                <td>{item.user}</td>
+                <td>
+                  <div className="user-info-cell">
+                    <strong>{item.user?.name || "System"}</strong>
+                    <span className="user-email-sub">{item.user?.email || ""}</span>
+                  </div>
+                </td>
                 <td>
                   <span className={getBadgeClass(item.action)}>
                     {item.action}
                   </span>
                 </td>
                 <td>{item.resource}</td>
-                <td>{item.ip}</td>
+                <td><code>{item.ip}</code></td>
               </tr>
             ))
           ) : (
@@ -203,9 +190,8 @@ export default function AuditLogs() {
           {Array.from({ length: totalPages }, (_, index) => (
             <button
               key={index}
-              className={`page-btn ${
-                currentPage === index + 1 ? "active" : ""
-              }`}
+              className={`page-btn ${currentPage === index + 1 ? "active" : ""
+                }`}
               onClick={() => setCurrentPage(index + 1)}
             >
               {index + 1}

@@ -1,14 +1,14 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { 
-  LogOut, 
-  User as UserIcon, 
+import {
+  LogOut,
+  User as UserIcon,
   LayoutDashboard,
   FolderKanban,
   Rocket,
   Users,
   Layers,
   FileText,
-  Settings 
+  Settings
 } from "lucide-react";
 import "./Navbar.css";
 
@@ -24,7 +24,7 @@ const navConfig = [
     name: "Projects",
     path: "/projects",
     icon: FolderKanban,
-    roles: ["admin", "developer"]
+    roles: ["admin", "devops", "developer"]
   },
   {
     name: "Deployments",
@@ -60,11 +60,12 @@ const navConfig = [
 
 function Navbar() {
   const navigate = useNavigate();
-  
+
   // Safely parse user from localStorage
   const userJson = localStorage.getItem("user");
   const user = userJson ? JSON.parse(userJson) : null;
-  const role = user?.role || "developer";
+  const role = (user?.role || "developer").toLowerCase();
+  console.log(role);
 
   const handleLogout = () => {
     // Clear session data
@@ -79,7 +80,7 @@ function Navbar() {
   const filteredNav = navConfig.filter(item =>
     item.roles.includes(role)
   );
-
+  console.log(filteredNav);
   return (
     <aside className="sidebar">
       {/* Logo */}
@@ -110,29 +111,20 @@ function Navbar() {
       <div className="sidebar-footer">
         <div className="user-profile">
           <div className="user-avatar">
-             <UserIcon size={20} color="#6b7280" />
+            <UserIcon size={20} color="#6b7280" />
           </div>
           <div className="user-info">
             <p className="user-name">{user?.name || "Guest User"}</p>
             <p className="user-email">{user?.email || "Not logged in"}</p>
           </div>
         </div>
-        
+
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={18} />
           <span>Logout</span>
         </button>
       </div>
 
-      {/* Plan Card */}
-      <div className="plan-card">
-        <p className="plan-label">CURRENT PLAN</p>
-        <h3>Enterprise Tier</h3>
-        <div className="progress-bar">
-          <div className="progress-fill"></div>
-        </div>
-        <p className="nodes">750 / 1000 Managed Nodes</p>
-      </div>
     </aside>
   );
 }

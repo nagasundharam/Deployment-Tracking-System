@@ -11,15 +11,18 @@ export default function Projects() {
   const [editId, setEditId] = useState(null);
 
   // Retrieve auth data from localStorage
-  const user = JSON.parse(localStorage.getItem("user"));
+  const userRaw = localStorage.getItem("user");
+  const user = userRaw ? JSON.parse(userRaw) : null;
   const token = localStorage.getItem("token"); 
-  const role = user?.role;
+  const role = (user?.role || "developer").toLowerCase();
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     repo_url: "",
-    members: []
+    members: [],
+    assigned_date: "",
+    completion_date: ""
   });
 
 // 1. Fetch Projects and Users on Mount
@@ -87,7 +90,9 @@ export default function Projects() {
       description: formData.description,
       repo_url: formData.repo_url,
       members: formData.members,
-      created_by: creatorId // This matches your backend's const { created_by } = req.body
+      created_by: creatorId,
+      assigned_date: formData.assigned_date,
+      completion_date: formData.completion_date
     };
 
     try {
@@ -146,7 +151,9 @@ export default function Projects() {
       description: project.description,
       repo_url: project.repo_url || "",
       // Map members to IDs to match checkbox logic
-      members: project.members.map(m => (typeof m === 'object' ? m._id : m))
+      members: project.members.map(m => (typeof m === 'object' ? m._id : m)),
+      assigned_date: project.assigned_date ? new Date(project.assigned_date).toISOString().split('T')[0] : "",
+      completion_date: project.completion_date ? new Date(project.completion_date).toISOString().split('T')[0] : ""
     });
     setShowModal(true);
   };
@@ -154,7 +161,7 @@ export default function Projects() {
   const closeModal = () => {
     setShowModal(false);
     setEditId(null);
-    setFormData({ name: "", description: "", repo_url: "", members: [] });
+    setFormData({ name: "", description: "", repo_url: "", members: [], assigned_date: "", completion_date: "" });
   };
 
   // 5. Filter and Sort Logic
@@ -173,7 +180,7 @@ export default function Projects() {
           <p>Manage and monitor your active workspace projects.</p>
         </div>
         {(role === "admin" || role === "devops") && (
-          <button className="primary-btn" onClick={() => setShowModal(true)}>
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
             <Plus size={18} /> New Project
           </button>
         )}
@@ -218,18 +225,36 @@ export default function Projects() {
               </div>
               <p className="card-desc">{project.description}</p>
               
+              <div className="card-meta-main">
+                <div className="members-stack">
+                  {project.members?.slice(0, 3).map((m, i) => (
+                    <div key={m._id || i} className="member-avatar-small" title={m.name}>
+                      {m.name?.charAt(0).toUpperCase()}
+                    </div>
+                  ))}
+                  {project.members?.length > 3 && (
+                    <div className="member-avatar-more">+{project.members.length - 3}</div>
+                  )}
+                  <span className="members-label">{project.members?.length || 0} Assigned</span>
+                </div>
+              </div>
+
               <div className="card-meta">
                 <div className="meta-item">
                   <Globe size={14} />
-                  <span>{project.repo_url ? "GitHub linked" : "No Repo"}</span>
-                </div>
-                <div className="meta-item">
-                  <UsersIcon size={14} />
-                  <span>{project.members?.length || 0} Members</span>
+                  {project.repo_url ? (
+                    <a href={project.repo_url} target="_blank" rel="noopener noreferrer" className="repo-link">View Repo</a>
+                  ) : (
+                    <span>No Repo</span>
+                  )}
                 </div>
                 <div className="meta-item">
                   <Calendar size={14} />
-                  <span>{new Date(project.createdAt).toLocaleDateString()}</span>
+                  <span>
+                    {project.assigned_date ? new Date(project.assigned_date).toLocaleDateString() : "TBD"} 
+                    {" → "} 
+                    {project.completion_date ? new Date(project.completion_date).toLocaleDateString() : "Ongoing"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -269,9 +294,30 @@ export default function Projects() {
                 <label>Repository URL</label>
                 <input 
                   value={formData.repo_url}
+                  type="url"
                   placeholder="https://github.com/user/repo" 
                   onChange={e => setFormData({...formData, repo_url: e.target.value})} 
                 />
+              </div>
+              <div className="form-row">
+                <div className="form-group flex-1">
+                  <label>Assigned Date</label>
+                  <input 
+                    type="date"
+                    value={formData.assigned_date}
+                    onChange={e => setFormData({...formData, assigned_date: e.target.value})} 
+                    disabled={role !== "admin"}
+                  />
+                </div>
+                <div className="form-group flex-1">
+                  <label>Completion Deadline</label>
+                  <input 
+                    type="date"
+                    value={formData.completion_date}
+                    onChange={e => setFormData({...formData, completion_date: e.target.value})} 
+                    disabled={role !== "admin"}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label>Assign Team Members</label>
@@ -299,8 +345,8 @@ export default function Projects() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="secondary-btn" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="primary-btn">
+                <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
+                <button type="submit" className="btn-primary">
                   {editId ? "Update Project" : "Create Project"}
                 </button>
               </div>

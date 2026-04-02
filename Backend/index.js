@@ -1,10 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const helmet = require("helmet");
+const morgan = require("morgan");
 const connectDB = require("./config/db");
-const { User } = require("./schema/userSchema");
 
-const {protect} = require("./middleware/authMiddleware");
+
+const { protect } = require("./middleware/authMiddleware");
 
 const authRoutes = require("./routes/authRoute");
 const { authorizeRoles } = require("./middleware/roleMiddleware");
@@ -21,29 +23,29 @@ const userRoute = require("./routes/userRoutes");
 const app = express();
 const projectRoute = require("./routes/projectsRoute");
 const logsRoute = require("./routes/logRoutes");
-
-
-
-
-
+const auditLogRoutes = require("./routes/auditLogRoutes");
 
 dotenv.config();
-
+app.use(helmet());
+app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
 
 // app.use("/",)
-app.use("/api/projects",projectRoute );
+app.use("/api/projects", projectRoute);
 app.use("/api/auth", authRoutes);
-app.use("/api/deployments",deploymentRoutes);
-app.use("/api/users",userRoute);
-app.use("/api/environments", environmentRoutes);
 app.use("/api/deployments", deploymentRoutes);
+app.use("/api/users", userRoute);
+app.use("/api/environments", environmentRoutes);
+app.use("/api/audit-logs", auditLogRoutes);
 
 // Logs Module
 app.use("/api/logs", logsRoute);
 
-app.use("/",protect,authorizeRoles("admin") ,(req,res) => {
+const { handleJenkinsWebhook } = require("./controllers/jenkinsController");
+app.post("/api/jenkins-webhook", handleJenkinsWebhook);
+
+app.use("/", protect, authorizeRoles("admin"), (req, res) => {
     res.send("Protected Route Accessed");
 });
 app.use
@@ -54,7 +56,7 @@ connectDB();
 
 
 
-app.get('/', (req,res)=> {
+app.get('/', (req, res) => {
     res.send("Welcome to Deployment Tracking System API");
 })
 

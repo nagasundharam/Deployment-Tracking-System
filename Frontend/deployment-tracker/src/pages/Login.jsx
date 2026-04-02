@@ -41,34 +41,42 @@ export default function Login() {
 
   return (
     <div className="auth-wrapper">
+
       <div className="auth-card">
+        <div className="logo-icon-auth">🚀</div>
         <h2>Welcome Back 👋</h2>
-        <p>Please login to continue</p>
+        <p>Please login to your account</p>
 
         {error && <p className="error">{error}</p>}
 
         <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter your email"
-            onChange={handleChange}
-            required
-          />
+          <div className="input-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="name@company.com"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-            onChange={handleChange}
-            required
-          />
+          <div className="input-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter your password"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <button type="submit">Login</button>
+          <button type="submit">Log In</button>
         </form>
 
         <div className="auth-footer">
-          Don't have an account? <Link to="/register">Register</Link>
+          Don't have an account? <Link to="/register">Create one</Link>
         </div>
       </div>
     </div>

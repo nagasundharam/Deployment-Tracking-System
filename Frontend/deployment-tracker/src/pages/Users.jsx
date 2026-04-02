@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./Users.css";
 import CreateUserModal from "../components/CreateUserModal";
+import { api } from "../services/api";
 
 const PAGE_SIZE = 8;
 
@@ -16,8 +17,7 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/users/get");
-      const data = await response.json();
+      const data = await api.get("/users/get");
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -33,12 +33,8 @@ const Users = () => {
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/users/delete/${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setUsers((prev) => prev.filter((u) => u._id !== id));
-      }
+      await api.delete(`/users/delete/${id}`);
+      setUsers((prev) => prev.filter((u) => u._id !== id));
     } catch (error) {
       console.error("Error deleting user:", error);
     }
@@ -47,39 +43,25 @@ const Users = () => {
   const handleCreateOrUpdateUser = async (userPayload) => {
     try {
       const isEdit = !!editingUser;
-      const url = isEdit
-        ? `http://localhost:5000/api/users/update/${editingUser._id}`
-        : "http://localhost:5000/api/users/create";
-      const method = isEdit ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userPayload),
-      });
-
-      if (response.ok) {
-        await fetchUsers();
-        setShowModal(false);
-        setEditingUser(null);
+      if (isEdit) {
+        await api.put(`/users/update/${editingUser._id}`, userPayload);
       } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.message}`);
+        await api.post("/users/create", userPayload);
       }
+      await fetchUsers();
+      setShowModal(false);
+      setEditingUser(null);
     } catch (error) {
       console.error("Error saving user:", error);
+      alert(`Error: ${error.message}`);
     }
   };
 
   const handleBlockToggle = async (user) => {
     const action = user.isBlocked ? "unblock" : "block";
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/users/${user._id}/${action}`,
-        { method: "PATCH" }
-      );
-      if (response.ok) {
-        const updated = await response.json();
+      const updated = await api.patch(`/users/${user._id}/${action}`);
+      if (updated) {
         setUsers((prev) =>
           prev.map((u) => (u._id === user._id ? updated.user : u))
         );
@@ -140,7 +122,21 @@ const Users = () => {
             setShowModal(true);
           }}
         >
-          + Invite Member
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Invite Member
         </button>
       </div>
 
@@ -179,7 +175,7 @@ const Users = () => {
           <span>Role</span>
           <span>Status</span>
           <span>Created</span>
-          <span style={{ textAlign: "right" }}>Actions</span>
+          <span style={{ textAlign: "right", paddingRight: "8px" }}>Actions</span>
         </div>
 
         {paginatedUsers.length === 0 ? (
@@ -188,18 +184,18 @@ const Users = () => {
           paginatedUsers.map((user) => {
             const initials = user.name
               ? user.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
               : "U";
 
             const roleLabel =
               user.role === "admin"
                 ? "Admin"
                 : user.role === "devops"
-                ? "DevOps Engineer"
-                : "Developer";
+                  ? "DevOps Engineer"
+                  : "Developer";
 
             return (
               <div key={user._id} className="users-table__row">
@@ -228,9 +224,8 @@ const Users = () => {
                 </div>
                 <div>
                   <span
-                    className={`status-badge ${
-                      user.isBlocked ? "status-blocked" : "status-active"
-                    }`}
+                    className={`status-badge ${user.isBlocked ? "status-blocked" : "status-active"
+                      }`}
                   >
                     {user.isBlocked ? "Blocked" : "Active"}
                   </span>

@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../services/api";
 import "./Deployments.css";
 
 export default function Deployments() {
@@ -28,13 +29,13 @@ export default function Deployments() {
 
   const itemsPerPage = 8;
   const user = JSON.parse(localStorage.getItem("user"));
-  const role = user?.role || "developer"; // fallback safety
+  const role = (user?.role || "developer").toLowerCase(); // fallback safety
   // const role = "admin"; // Testing
 
   useEffect(() => {
     fetchInitialData();
   }, []);
-  
+
 
 
   const formatDeployments = (data) => {
@@ -59,9 +60,9 @@ export default function Deployments() {
         triggeredBy: d.triggered_by?.username || "System",
         triggeredAt: d.createdAt
           ? new Date(d.createdAt).toLocaleString("en-GB", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })
+            dateStyle: "medium",
+            timeStyle: "short",
+          })
           : "N/A",
         durationLabel:
           durationSeconds !== null ? `${durationSeconds}s` : "--",
@@ -75,17 +76,7 @@ export default function Deployments() {
   // fetch environments when project changes in the create form
   useEffect(() => {
     if (newDeployment.project_id) {
-      const token = localStorage.getItem("token");
-      fetch(
-        `http://localhost:5000/api/deployments/environments/${newDeployment.project_id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-        .then(async (res) => {
-          if (!res.ok) throw new Error(await res.text());
-          return res.json();
-        })
+      api.get(`/deployments/environments/${newDeployment.project_id}`)
         .then((data) => setProjectEnvironments(Array.isArray(data) ? data : []))
         .catch((err) => console.error("Env Fetch Error:", err));
     }
@@ -103,22 +94,9 @@ export default function Deployments() {
       if (!token) return;
 
       // Start both requests at once to save time
-      const [depRes, metaRes] = await Promise.all([
-        fetch("http://localhost:5000/api/deployments", { headers }),
-        fetch("http://localhost:5000/api/deployments/metadata", { headers }),
-      ]);
-
-      // Check for JSON safety to prevent "Unexpected token P"
-      const parseSafe = async (res) => {
-        if (res.ok && res.headers.get("content-type")?.includes("json")) {
-          return res.json();
-        }
-        return null;
-      };
-
       const [depData, metaData] = await Promise.all([
-        parseSafe(depRes),
-        parseSafe(metaRes),
+        api.get("/deployments"),
+        api.get("/deployments/metadata"),
       ]);
 
       if (depData) {
@@ -143,19 +121,11 @@ export default function Deployments() {
   const sendAuditEvent = useCallback(
     async (action, resource) => {
       try {
-        const token = localStorage.getItem("token");
         const username = user?.username || user?.name || "unknown";
-        await fetch("http://localhost:5000/api/audit-logs", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        await api.post("/audit-logs", {
             action,
             resource,
             user: username,
-          }),
         });
       } catch (err) {
         console.error("Audit Log Error:", err);
@@ -202,24 +172,16 @@ export default function Deployments() {
           return;
         }
 
-        const res = await fetch("http://localhost:5000/api/deployments", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ADD AUTHORIZATION HEADER
+        const created = await api.post("/deployments", {
+          ...newDeployment,
+          triggered_by: {
+            source: "manual",
+            username: user?.username || user?.name,
+            user_id: user?.id || user?._id,
           },
-          body: JSON.stringify({
-            ...newDeployment,
-            triggered_by: {
-              source: "manual",
-              username: user?.username || user?.name,
-              user_id: user?.id || user?._id,
-            },
-          }),
         });
 
-        if (res.ok) {
-          const created = await res.json().catch(() => null);
+        if (created) {
           const projectName =
             created?.project_id?.name ||
             selectedEnv?.project_id?.name ||
@@ -236,11 +198,6 @@ export default function Deployments() {
             branch: "main",
           });
           fetchInitialData(); // Refresh list
-        } else {
-          const errData = await res
-            .json()
-            .catch(() => ({ message: "Unauthorized Action" }));
-          alert(errData.message || "Failed to deploy. Check permissions.");
         }
       } catch (err) {
         console.error("Deployment Error:", err);
@@ -257,7 +214,7 @@ export default function Deployments() {
     ]
   );
 
-  
+
   const filteredDeployments = useMemo(() => {
     return deployments.filter((d) => {
       const matchesSearch = d.version.toLowerCase().includes(search.toLowerCase()) || d.project.toLowerCase().includes(search.toLowerCase());
@@ -298,8 +255,8 @@ export default function Deployments() {
     const avgSeconds =
       durations.length > 0
         ? Math.round(
-            durations.reduce((sum, v) => sum + v, 0) / durations.length
-          )
+          durations.reduce((sum, v) => sum + v, 0) / durations.length
+        )
         : null;
 
     return {
@@ -322,13 +279,13 @@ export default function Deployments() {
           role === "devops" ||
           role === "developer" ||
           role === "qa") && (
-          <button
-            className="primary-btn"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <span className="plus-icon">+</span> New Deployment
-          </button>
-        )}
+            <button
+              className="primary-btn"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <span className="plus-icon">+</span> New Deployment
+            </button>
+          )}
       </header>
 
       {/* Quick Stats Section */}
@@ -426,70 +383,70 @@ export default function Deployments() {
 
       {/* CREATE MODAL */}
       {showCreateModal && (
-  <div className="modal-overlay">
-    <div className="modal-content-modern">
-      <div className="modal-header-modern">
-        <div className="header-title-area">
-          <div className="header-icon-hex">🚀</div>
-          <div>
-            <h3>Initialize Pipeline</h3>
-            <p>Configure deployment artifact and target environment</p>
+        <div className="modal-overlay">
+          <div className="modal-content-modern">
+            <div className="modal-header-modern">
+              <div className="header-title-area">
+                <div className="header-icon-hex">🚀</div>
+                <div>
+                  <h3>Initialize Pipeline</h3>
+                  <p>Configure deployment artifact and target environment</p>
+                </div>
+              </div>
+              <button className="close-x-btn" onClick={() => setShowCreateModal(false)}>&times;</button>
+            </div>
+
+            <form onSubmit={handleCreateDeployment} className="modal-form-modern">
+              <div className="form-section">
+                <label className="section-label">Target Configuration</label>
+                <div className="form-group-modern">
+                  <label>Project</label>
+                  <select required onChange={(e) => setNewDeployment({ ...newDeployment, project_id: e.target.value })}>
+                    <option value="">Select Project to deploy...</option>
+                    {metadata.projects.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="form-row-modern">
+                  <div className="form-group-modern">
+                    <label>Environment</label>
+                    <select required disabled={!newDeployment.project_id} onChange={(e) => setNewDeployment({ ...newDeployment, environment_id: e.target.value })}>
+                      <option value="">Select Target</option>
+                      {projectEnvironments.map(e => <option key={e._id} value={e._id}>{e.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group-modern">
+                    <label>Operator</label>
+                    <select required onChange={(e) => setNewDeployment({ ...newDeployment, devops_id: e.target.value })}>
+                      <option value="">Assign Engineer</option>
+                      {metadata.devops.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-section">
+                <label className="section-label">Artifact Details</label>
+                <div className="form-row-modern">
+                  <div className="form-group-modern">
+                    <label>Version Tag</label>
+                    <input type="text" placeholder="e.g. v1.0.4-stable" required onChange={(e) => setNewDeployment({ ...newDeployment, version: e.target.value })} />
+                  </div>
+                  <div className="form-group-modern">
+                    <label>Git Branch</label>
+                    <input type="text" value={newDeployment.branch} onChange={(e) => setNewDeployment({ ...newDeployment, branch: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer-modern">
+                <button type="button" className="btn-secondary-modern" onClick={() => setShowCreateModal(false)}>Discard</button>
+                <button type="submit" className="btn-primary-modern">Deploy to Cloud</button>
+              </div>
+            </form>
           </div>
         </div>
-        <button className="close-x-btn" onClick={() => setShowCreateModal(false)}>&times;</button>
-      </div>
-
-      <form onSubmit={handleCreateDeployment} className="modal-form-modern">
-        <div className="form-section">
-          <label className="section-label">Target Configuration</label>
-          <div className="form-group-modern">
-            <label>Project</label>
-            <select required onChange={(e) => setNewDeployment({...newDeployment, project_id: e.target.value})}>
-              <option value="">Select Project to deploy...</option>
-              {metadata.projects.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-            </select>
-          </div>
-
-          <div className="form-row-modern">
-            <div className="form-group-modern">
-              <label>Environment</label>
-              <select required disabled={!newDeployment.project_id} onChange={(e) => setNewDeployment({...newDeployment, environment_id: e.target.value})}>
-                <option value="">Select Target</option>
-                {projectEnvironments.map(e => <option key={e._id} value={e._id}>{e.name}</option>)}
-              </select>
-            </div>
-            <div className="form-group-modern">
-              <label>Operator</label>
-              <select required onChange={(e) => setNewDeployment({...newDeployment, devops_id: e.target.value})}>
-                <option value="">Assign Engineer</option>
-                {metadata.devops.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="form-section">
-          <label className="section-label">Artifact Details</label>
-          <div className="form-row-modern">
-            <div className="form-group-modern">
-              <label>Version Tag</label>
-              <input type="text" placeholder="e.g. v1.0.4-stable" required onChange={(e) => setNewDeployment({...newDeployment, version: e.target.value})} />
-            </div>
-            <div className="form-group-modern">
-              <label>Git Branch</label>
-              <input type="text" value={newDeployment.branch} onChange={(e) => setNewDeployment({...newDeployment, branch: e.target.value})} />
-            </div>
-          </div>
-        </div>
-
-        <div className="modal-footer-modern">
-          <button type="button" className="btn-secondary-modern" onClick={() => setShowCreateModal(false)}>Discard</button>
-          <button type="submit" className="btn-primary-modern">Deploy to Cloud</button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }

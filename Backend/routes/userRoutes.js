@@ -10,15 +10,19 @@ const {
     unblockUser
 } = require("../controllers/userController");
 
+const { protect } = require("../middleware/authMiddleware");
+const { authorizeRoles } = require("../middleware/roleMiddleware");
+
 // Now these will not be 'undefined'
-router.post("/create", createUser);
-router.get("/get", getUsers);
-router.get("/profile", getUserProfile); 
-router.put("/update/:id", updateUser);
-router.delete("/delete/:id", deleteUser);
+// Only admins can create, get all, update, delete, block, unblock
+router.post("/create", protect, authorizeRoles("admin"), createUser);
+router.get("/get", protect, authorizeRoles("admin"), getUsers);
+router.get("/profile", protect, getUserProfile); 
+router.put("/update/:id", protect, authorizeRoles("admin"), updateUser);
+router.delete("/delete/:id", protect, authorizeRoles("admin"), deleteUser);
 
 // Block / Unblock User
-router.patch("/:id/block", blockUser);
-router.patch("/:id/unblock", unblockUser);
+router.patch("/:id/block", protect, authorizeRoles("admin"), blockUser);
+router.patch("/:id/unblock", protect, authorizeRoles("admin"), unblockUser);
 
 module.exports = router;

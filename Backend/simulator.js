@@ -1,6 +1,6 @@
 const axios = require('axios');
 const mongoose = require("mongoose");
-const { Deployment } = require("./schema/deploymentSchema"); 
+const { Deployment } = require("./models/schema/deploymentSchema"); 
 require("dotenv").config();
 
 mongoose.connect(process.env.MONGO_URI)

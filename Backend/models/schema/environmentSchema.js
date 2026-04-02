@@ -11,6 +11,10 @@ const environmentSchema = new mongoose.Schema(
             required: true
         },
         name : { type: String, enum: ['development','testing','production'],required: true},
+        assigned_user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
         created_at : { type : Date, default: Date.now}
 
 

@@ -1,7 +1,7 @@
-const { Deployment } = require("../schema/deploymentSchema");
-const { Environment } = require("../schema/environmentSchema");
-const { Project } = require("../schema/projectSchema");
-const { DeploymentLogs } = require("../schema/deploymentLogsSchema");
+const { Deployment } = require("../models/schema/deploymentSchema");
+const { Environment } = require("../models/schema/environmentSchema");
+const { Project } = require("../models/schema/projectSchema");
+const { DeploymentLogs } = require("../models/schema/deploymentLogsSchema");
 
 async function buildDeploymentReport(deploymentId) {
   const deployment = await Deployment.findById(deploymentId)

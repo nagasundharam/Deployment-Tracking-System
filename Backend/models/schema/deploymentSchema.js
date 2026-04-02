@@ -53,6 +53,11 @@ const deploymentSchema = new mongoose.Schema({
     start_time : { type: Date},
     end_time : { type: Date},
    
+    commit_message: { type: String },
+    commit_author: { type: String },
+    commit_author_email: { type: String },
+    commit_hash: { type: String },
+
 stages: [{
   name: { type: String }, // e.g., "Build", "Unit Test", "SonarQube Scan"
   status: { 

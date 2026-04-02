@@ -1,4 +1,4 @@
-const { DeploymentLogs } = require("../schema/deploymentLogsSchema");
+const { DeploymentLogs } = require("../models/schema/deploymentLogsSchema");
 
 // GET: Fetch all logs for a specific deployment
 exports.getLogsByDeployment = async (req, res) => {

@@ -1,4 +1,4 @@
-const { User } = require("../schema/userSchema");
+const { User } = require("../models/schema/userSchema");
 const bcrypt = require("bcryptjs"); // npm install bcryptjs
 
 // 1. Create User (Handles Hashing)
