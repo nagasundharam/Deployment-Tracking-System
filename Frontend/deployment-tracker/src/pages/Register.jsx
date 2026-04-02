@@ -5,7 +5,6 @@ import "./Auth.css";
 
 export default function Register() {
   const navigate = useNavigate();
-  const PORT =  5000;
 
   const [form, setForm] = useState({
     username: "",
@@ -25,7 +24,7 @@ export default function Register() {
 
     try {
       const res = await axios.post(
-        `http://localhost:${PORT}/api/auth/register`,
+        `${import.meta.env.VITE_API_URL}/auth/register`,
         form
       );
 

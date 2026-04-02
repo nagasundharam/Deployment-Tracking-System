@@ -5,7 +5,6 @@ import "./Auth.css";
 
 export default function Login() {
   const navigate = useNavigate();
-  const PORT = 5000;
 
   const [form, setForm] = useState({
     email: "",
@@ -24,7 +23,7 @@ export default function Login() {
 
     try {
       const res = await axios.post(
-        `http://localhost:${PORT}/api/auth/login`,
+        `${import.meta.env.VITE_API_URL}/auth/login`,
         form
       );
 

@@ -1,6 +1,8 @@
 const express = require("express");
-const cors = require("cors");
 const dotenv = require("dotenv");
+dotenv.config();
+
+const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const connectDB = require("./config/db");
@@ -25,7 +27,7 @@ const projectRoute = require("./routes/projectsRoute");
 const logsRoute = require("./routes/logRoutes");
 const auditLogRoutes = require("./routes/auditLogRoutes");
 
-dotenv.config();
+app.use(cors()); // Allow all origins during development/transition
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(cors());

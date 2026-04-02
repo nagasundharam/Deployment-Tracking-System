@@ -14,8 +14,7 @@ const jwt = require("jsonwebtoken");
         req.user = decoded;
         next();
     }catch(error) {
-        
-
+        console.error("JWT Verification Error:", error.message);
         return res.status(401).json({ message: "Login Timeout Login again" });
     }
     }
