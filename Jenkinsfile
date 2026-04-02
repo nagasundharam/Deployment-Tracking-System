@@ -3,6 +3,9 @@ pipeline {
  
     environment {
         MONGO_URI = credentials('MONGO_URI')
+        JWT_SECRET = credentials('JWT_SECRET')
+        DATABASE_PORT = '5000'
+        VITE_API_URL = 'http://34.204.195.105:5000/api'
     }
 
     options {
