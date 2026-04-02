@@ -50,12 +50,12 @@ export default function Projects() {
 
       try {
         // Fetch Users
-        const userRes = await fetch("http://localhost:5000/api/users/get", { headers });
+        const userRes = await fetch(`${import.meta.env.VITE_API_URL}/users/get`, { headers });
         const userData = await userRes.json();
         setAvailableUsers(Array.isArray(userData) ? userData : userData.users || []);
 
         // Fetch Projects
-        const projRes = await fetch(`http://localhost:5000/api/projects/user/${userId}`, { headers });
+        const projRes = await fetch(`${import.meta.env.VITE_API_URL}/projects/user/${userId}`, { headers });
         const projData = await projRes.json();
         setProjects(Array.isArray(projData) ? projData : projData.projects || []);
 
@@ -79,8 +79,8 @@ export default function Projects() {
     }
 
     const url = editId 
-      ? `http://localhost:5000/api/projects/${editId}` 
-      : "http://localhost:5000/api/projects";
+      ? `${import.meta.env.VITE_API_URL}/projects/${editId}` 
+      : `${import.meta.env.VITE_API_URL}/projects`;
     
     const method = editId ? "PUT" : "POST";
 
@@ -127,7 +127,7 @@ export default function Projects() {
     if (!window.confirm("Are you sure you want to delete this project?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });

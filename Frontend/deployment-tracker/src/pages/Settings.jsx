@@ -30,7 +30,7 @@ const Settings = () => {
         api.get(projectEndpoint),
         api.get("/environments"),
         api.get("/deployments"),
-        isAdmin ? api.get("/users/get") : Promise.resolve([]),
+        isAdmin || role === "devops" ? api.get("/users/get") : Promise.resolve([]),
       ]);
 
       setData({

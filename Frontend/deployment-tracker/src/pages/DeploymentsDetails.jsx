@@ -27,7 +27,7 @@ const DeploymentDetails = () => {
 
       // Fetch Deployment Status
       const depRes = await fetch(
-        `http://localhost:5000/api/deployments/${id}`,
+        `${import.meta.env.VITE_API_URL}/deployments/${id}`,
         { headers }
       );
       const depData = await depRes.json();
@@ -35,7 +35,7 @@ const DeploymentDetails = () => {
 
       // Fetch Logs
       const logRes = await fetch(
-        `http://localhost:5000/api/deployments/${id}/logs`,
+        `${import.meta.env.VITE_API_URL}/deployments/${id}/logs`,
         { headers }
       );
       const logData = await logRes.json();
@@ -73,7 +73,7 @@ const DeploymentDetails = () => {
         const username = user?.username || user?.name || "unknown";
         const projectName = deployment?.project_id?.name || "Unknown Project";
 
-        await fetch("http://localhost:5000/api/audit-logs", {
+        await fetch(`${import.meta.env.VITE_API_URL}/audit-logs`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -172,7 +172,7 @@ const DeploymentDetails = () => {
         setActionLoading(true);
         const token = localStorage.getItem("token");
         const res = await fetch(
-          `http://localhost:5000/api/deployments/${id}/status`,
+          `${import.meta.env.VITE_API_URL}/deployments/${id}/status`,
           {
             method: "PATCH",
             headers: {
@@ -223,7 +223,7 @@ const DeploymentDetails = () => {
       setActionLoading(true);
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `http://localhost:5000/api/deployments/${id}/redeploy`,
+        `${import.meta.env.VITE_API_URL}/deployments/${id}/redeploy`,
         {
           method: "POST",
           headers: {
@@ -269,7 +269,7 @@ const DeploymentDetails = () => {
             onClick={async () => {
               const token = localStorage.getItem("token");
               const res = await fetch(
-                `http://localhost:5000/api/deployments/${id}/report?format=pdf`,
+                `${import.meta.env.VITE_API_URL}/deployments/${id}/report?format=pdf`,
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
@@ -292,7 +292,7 @@ const DeploymentDetails = () => {
             onClick={async () => {
               const token = localStorage.getItem("token");
               const res = await fetch(
-                `http://localhost:5000/api/deployments/${id}/report?format=csv`,
+                `${import.meta.env.VITE_API_URL}/deployments/${id}/report?format=csv`,
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
