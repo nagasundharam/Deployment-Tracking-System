@@ -1,0 +1,24 @@
+services:
+  # Backend Service (Node.js/Express)
+  backend:
+    build: 
+      context: ./Backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb+srv://nagasm002_db_user:kKKyNwkpxtqdV9aB@cluster0.pslx0yb.mongodb.net/
+      - PORT=5000
+      - NODE_ENV=production
+    restart: always
+
+  # Frontend Service (React/Vite)
+  frontend:
+    build: 
+      context: ./Frontend/deployment-tracker
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
