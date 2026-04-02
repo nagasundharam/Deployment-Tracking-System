@@ -10,7 +10,7 @@ exports.getProjectByUserId = async (req, res) => {
         const projects = await Project.find({
             $or: [{ members: userId }, { created_by: userId }]
         })
-        .populate("members", "name email role") // Populates the user details for the popup
+        .populate("members", "name email role avatar") 
         .populate("created_by", "name email")
         .sort({ createdAt: -1 });
 
@@ -25,7 +25,7 @@ exports.getProjectByUserId = async (req, res) => {
 exports.getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find()
-            .populate("members", "name email role")
+            .populate("members", "name email role avatar")
             .populate("created_by", "name email")
             .sort({ createdAt: -1 });
 
@@ -60,7 +60,7 @@ exports.createProject = async (req, res) => {
 
         // Populate members before sending back so frontend has names immediately
         const populatedProject = await Project.findById(newProject._id)
-            .populate("members", "name email role");
+            .populate("members", "name email role avatar");
 
         res.status(201).json({ 
             message: "Project created successfully", 
