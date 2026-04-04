@@ -372,6 +372,17 @@ const DeploymentDetails = () => {
                </div>
             </div>
 
+            {/* Commit Message & Pusher Block */}
+            {deployment.commit_message && (
+               <div className="commit-message-block">
+                 <span className="quote-icon">❝</span>
+                 <div className="commit-text-content">
+                    <p className="msg-text">{deployment.commit_message}</p>
+                    <p className="pushed-by">Pushed by <strong>{deployment.commit_author || deployment.triggered_by?.username || "System"}</strong></p>
+                 </div>
+               </div>
+            )}
+
             {/* Pending Approval Portal embedded here if pending */}
             {deployment.status === "pending" && (
               <div className="approval-portal">

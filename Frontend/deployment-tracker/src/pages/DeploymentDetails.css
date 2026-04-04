@@ -241,6 +241,48 @@
 .repo-icon { font-size: 14px; }
 .repo-text { font-family: monospace; font-size: 13px; }
 
+/* Commit Message Block */
+.commit-message-block {
+  margin-top: 24px;
+  padding: 16px 20px;
+  background: #f1f5f9;
+  border-left: 4px solid #3b82f6;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.quote-icon {
+  font-size: 24px;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.commit-text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commit-text-content .msg-text {
+  margin: 0;
+  font-size: 14px;
+  color: #1e293b;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.commit-text-content .pushed-by {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.commit-text-content .pushed-by strong {
+  color: #0f172a;
+}
+
 /* Approval Portal */
 .approval-portal {
   margin-top: 24px;
