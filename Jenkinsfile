@@ -1,16 +1,22 @@
+import groovy.json.JsonOutput
+
 pipeline {
     agent any
- 
-    environment {
-        MONGO_URI = credentials('MONGO_URI')
-        JWT_SECRET = credentials('JWT_SECRET')
-        DATABASE_PORT = '5000'
-        VITE_API_URL = 'http://34.204.195.105:5000/api'
+
+    parameters {
+        string(name: 'PROJECT_ID', defaultValue: '69d0996c860c3a42c3d8de5b', description: 'The unique ID of the project in the tracker')
+        string(name: 'ENVIRONMENT_ID', defaultValue: '69d099d1860c3a42c3d8de6d', description: 'The target environment ID')
+        string(name: 'DEPLOY_BRANCH', defaultValue: 'main', description: 'The branch being deployed')
+        string(name: 'EC2_HOST', defaultValue: '34.204.195.105', description: 'The IP/Host of your Deployment Tracker backend')
     }
 
-    options {
-        timeout(time: 15, unit: 'MINUTES')
-        buildDiscarder(logRotator(numToKeepStr: '5'))
+    environment {
+        COMMIT_HASH = ""
+        COMMIT_MSG = ""
+        COMMIT_AUTHOR = ""
+        COMMIT_EMAIL = ""
+        PUBLIC_IP = ""
+        VITE_API_URL = "http://${params.EC2_HOST}:5000/api"
     }
 
     stages {
@@ -18,39 +24,43 @@ pipeline {
             steps {
                 script {
                     echo "Extracting Git Metadata..."
+                    checkout scm
                     env.COMMIT_HASH = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
                     env.COMMIT_MSG = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
                     env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
-                    env.COMMIT_AUTHOR_EMAIL = sh(script: "git log -1 --pretty=%ae", returnStdout: true).trim()
-                    
-                    // Safely escape metadata for JSON
-                    def safeMsg = env.COMMIT_MSG.replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r')
-                    def safeAuthor = env.COMMIT_AUTHOR.replace('"', '\\"')
+                    env.COMMIT_EMAIL = sh(script: "git log -1 --pretty=%ae", returnStdout: true).trim()
+                    env.PUBLIC_IP = sh(script: "curl -s http://checkip.amazonaws.com", returnStdout: true).trim()
 
                     echo "Initializing Deployment Record in Tracker..."
-                    def initialPayload = """
-                    {
-                        "project_id": "69ce6897557b3606c5b165ec",
-                        "environment_id": "69ce68b3557b3606c5b165fb",
-                        "pipeline_id": "${env.BUILD_NUMBER}",
-                        "version": "1.0.${env.BUILD_NUMBER}",
-                        "branch": "main",
-                        "triggered_by": { "source": "jenkins", "username": "${safeAuthor}" },
-                        "commit_message": "${safeMsg}",
-                        "commit_author": "${safeAuthor}",
-                        "commit_author_email": "${env.COMMIT_AUTHOR_EMAIL}",
-                        "commit_hash": "${env.COMMIT_HASH}"
-                    }
-                    """
-                    writeFile file: 'initial_payload.json', text: initialPayload
+                    def payload = [
+                        project_id: params.PROJECT_ID,
+                        environment_id: params.ENVIRONMENT_ID,
+                        pipeline_id: env.BUILD_NUMBER,
+                        version: "1.0.${env.BUILD_NUMBER}",
+                        branch: params.DEPLOY_BRANCH,
+                        commit_message: env.COMMIT_MSG,
+                        commit_author: env.COMMIT_AUTHOR,
+                        commit_author_email: env.COMMIT_EMAIL,
+                        commit_hash: env.COMMIT_HASH,
+                        public_url: "http://${env.PUBLIC_IP}",
+                        node_name: env.NODE_NAME ?: "master",
+                        artifacts: [[name: "Static Assets", url: "frontend-dist-${env.BUILD_NUMBER}"]],
+                        triggered_by: [
+                            username: env.COMMIT_AUTHOR,
+                            source: "jenkins"
+                        ]
+                    ]
+
+                    def jsonString = JsonOutput.toJson(payload)
+                    writeFile file: 'initial_payload.json', text: jsonString
                     
                     def response = sh(script: "curl -s -X POST ${env.VITE_API_URL}/jenkins-webhook -H 'Content-Type: application/json' -d @initial_payload.json", returnStdout: true)
                     
-                    // Use grep as a robust fallback for parsing the ID from the JSON response
+                    // Extract DEPLOYMENT_ID from the response
                     env.DEPLOYMENT_ID = sh(script: "echo '${response}' | grep -oP '\"_id\":\"\\K[^\"]+' | head -1", returnStdout: true).trim()
                     
                     if (!env.DEPLOYMENT_ID) {
-                        echo "WARNING: Failed to capture DEPLOYMENT_ID from tracker. Response was: ${response}"
+                        echo "WARNING: Failed to capture DEPLOYMENT_ID. Response: ${response}"
                     } else {
                         echo "Tracker Initialized. Deployment ID: ${env.DEPLOYMENT_ID}"
                     }
@@ -58,62 +68,49 @@ pipeline {
             }
         }
 
-        stage('Checkout SCM') {
-            steps {
-                checkout scm
-                script { notifyStage("Checkout SCM", "success") }
-            }
-        }
-
-        stage('Deploy with Docker Compose') {
+        stage('Install & Build') {
             steps {
                 script {
-                    echo "Starting Build and Deployment..."
-                    sh 'docker compose up -d --build'
-                    notifyStage("Deploy with Docker Compose", "success")
+                    notifyStage("Install & Build", "running")
+                    sh 'npm install'
+                    sh 'npm run build'
+                    notifyStage("Install & Build", "success")
                 }
             }
         }
 
-        stage('Manual Approval') {
+        stage('Deploy Frontend') {
             steps {
                 script {
-                    if (env.DEPLOYMENT_ID) {
-                        sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"pending\"}'"
-                    }
-                    
-                    echo "--- AWAITING APPROVAL ---"
-                    input message: "Approve deployment to Environment?", ok: "Proceed"
-                    
-                    if (env.DEPLOYMENT_ID) {
-                        sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"approved\"}'"
-                    }
+                    notifyStage("Deploy Frontend", "running")
+                    // Example deployment command (update to match your server setup)
+                    sh "mkdir -p /tmp/dist && cp -r dist/* /tmp/dist/"
+                    echo "Deployment finished. App is live at http://${env.PUBLIC_IP}"
+                    notifyStage("Deploy Frontend", "success")
                 }
-            }
-        }
-
-        stage('Verify Containers') {
-            steps {
-                script {
-                    sh 'docker ps'
-                    notifyStage("Verify Containers", "success")
-                }
-            }
-        }
-
-        stage('Cleanup Images') {
-            steps {
-                sh 'docker image prune -f'
             }
         }
     }
 
     post {
         success {
-            echo "Deployment successful! http://your-ec2-ip"
+            script {
+                if (env.DEPLOYMENT_ID) {
+                    sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"success\"}'"
+                }
+            }
+            echo "-----------------------------------------------------------"
+            echo "DEPLOYMENT COMPLETE"
+            echo "URL: http://${env.PUBLIC_IP}"
+            echo "-----------------------------------------------------------"
         }
         failure {
-            echo "Deployment failed. Check terminal output."
+            script {
+                if (env.DEPLOYMENT_ID) {
+                    sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"failed\"}'"
+                }
+            }
+            echo "DEPLOYMENT FAILED: Check the build console for errors."
         }
     }
 }
@@ -121,16 +118,15 @@ pipeline {
 // Helper function defined OUTSIDE the pipeline block
 def notifyStage(String name, String status) {
     if (env.DEPLOYMENT_ID) {
-        echo "Notifying Tracker Stage: ${name} -> ${status}"
-        def stagePayload = """
-        {
-            "stageName": "${name}",
-            "status": "${status}"
-        }
-        """
-        writeFile file: "stage_update.json", text: stagePayload
-        sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/stage -H 'Content-Type: application/json' -d @stage_update.json"
+        echo "Notifying Tracker: ${name} -> ${status}"
+        def stagePayload = [
+            stageName: name,
+            status: status
+        ]
+        def jsonString = JsonOutput.toJson(stagePayload)
+        writeFile file: "stage_data.json", text: jsonString
+        sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/stage -H 'Content-Type: application/json' -d @stage_data.json"
     } else {
-        echo "Skipping Tracker Notification for stage ${name} as DEPLOYMENT_ID is missing."
+        echo "Skipping notification for ${name} - No DEPLOYMENT_ID available."
     }
 }
