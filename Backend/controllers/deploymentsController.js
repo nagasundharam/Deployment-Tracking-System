@@ -238,9 +238,20 @@ exports.updateDeploymentStatus = async (req, res) => {
 exports.updateStageStatus = async (req, res) => {
   try {
     const { stageName, status } = req.body;
+    const updateData = { 
+      "stages.$.status": status, 
+      "stages.$.updated_at": new Date() 
+    };
+
+    if (status === "running") {
+      updateData["stages.$.start_time"] = new Date();
+    } else if (status === "success" || status === "failure" || status === "failed") {
+      updateData["stages.$.end_time"] = new Date();
+    }
+
     const updated = await Deployment.findOneAndUpdate(
       { _id: req.params.id, "stages.name": stageName },
-      { $set: { "stages.$.status": status, "stages.$.updated_at": new Date() } },
+      { $set: updateData },
       { new: true }
     );
     res.json(updated);

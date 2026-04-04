@@ -12,8 +12,15 @@ const DeploymentDetails = () => {
   const role = user?.role || "developer";
   const currentUserId = user?.id || user?._id;
   
-  // Ref to automatically scroll the terminal to the bottom
   const terminalEndRef = useRef(null);
+
+  const formatDuration = (start, end) => {
+    if (!start || !end) return "";
+    const diff = Math.floor((new Date(end) - new Date(start)) / 1000);
+    const mins = Math.floor(diff / 60);
+    const secs = diff % 60;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  };
 
   const scrollToBottom = () => {
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -378,15 +385,47 @@ const DeploymentDetails = () => {
             <div className="meta-info">
               <p><strong>Version:</strong> {deployment.version}</p>
               <p><strong>Branch:</strong> {deployment.branch}</p>
-              <p><strong>Commit Hash:</strong> {deployment.commit_hash?.slice(0, 8) || "N/A"}</p>
+              <p>
+                <strong>Commit Hash:</strong>{" "}
+                {deployment.commit_hash ? (
+                  <a 
+                    href={deployment.project_id?.repo_url ? `${deployment.project_id.repo_url.replace('.git', '')}/commit/${deployment.commit_hash}` : "#"} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="commit-link"
+                  >
+                    {deployment.commit_hash.slice(0, 7)} ↗
+                  </a>
+                ) : "N/A"}
+              </p>
               <p><strong>Commit Author:</strong> {deployment.commit_author || deployment.triggered_by?.username || "System"}</p>
               <p><strong>Message:</strong> {deployment.commit_message || "No commit message provided"}</p>
               <p><strong>Started:</strong> {new Date(deployment.start_time || deployment.createdAt).toLocaleString()}</p>
               {deployment.end_time && <p><strong>Finished:</strong> {new Date(deployment.end_time).toLocaleString()}</p>}
               {deployment.start_time && deployment.end_time && (
-                <p><strong>Duration:</strong> {Math.round((new Date(deployment.end_time) - new Date(deployment.start_time)) / 1000)}s</p>
+                <p><strong>Duration:</strong> {formatDuration(deployment.start_time, deployment.end_time)}</p>
               )}
               <p><strong>Triggered By:</strong> {deployment.triggered_by?.source === "jenkins" ? "Jenkins CI" : (deployment.triggered_by?.username || "System")}</p>
+            </div>
+          </div>
+
+          <div className="card infrastructure-card">
+            <h3>Infrastructure Context</h3>
+            <div className="info-grid">
+              <div className="info-item">
+                <label>Build Node</label>
+                <span>{deployment.node_name || "master"}</span>
+              </div>
+              <div className="info-item">
+                <label>Public URL</label>
+                {deployment.public_url ? (
+                  <a href={deployment.public_url} target="_blank" rel="noopener noreferrer" className="btn-visit">
+                    Visit Application ↗
+                  </a>
+                ) : (
+                  <span>Not Available</span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -511,7 +550,10 @@ const DeploymentDetails = () => {
                   </div>
                   <div className="stage-info">
                     <span className="stage-name">{stage.name}</span>
-                    <span className="stage-status">{stage.status}</span>
+                    <span className="stage-status">
+                      {stage.status}
+                      {stage.start_time && stage.end_time && ` (${formatDuration(stage.start_time, stage.end_time)})`}
+                    </span>
                   </div>
                   {index !== deployment.stages.length - 1 && (
                     <div className={`connector ${stage.status === 'success' ? 'filled' : ''}`}></div>
@@ -520,6 +562,23 @@ const DeploymentDetails = () => {
               ))}
             </div>
           </div>
+
+          {deployment.artifacts && deployment.artifacts.length > 0 && (
+            <div className="card artifacts-card">
+              <h3>Build Artifacts</h3>
+              <div className="artifacts-list">
+                {deployment.artifacts.map((art, i) => (
+                  <div key={i} className="artifact-item">
+                    <span className="art-icon">📦</span>
+                    <div className="art-info">
+                      <span className="art-name">{art.name}</span>
+                      <span className="art-url">{art.url}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -56,6 +56,14 @@ const deploymentSchema = new mongoose.Schema({
     commit_author: { type: String },
     commit_author_email: { type: String },
     commit_hash: { type: String },
+    
+    // Professional context
+    public_url: { type: String },
+    node_name: { type: String },
+    artifacts: [{
+      name: { type: String },
+      url: { type: String }
+    }],
 
 stages: [{
   name: { type: String }, // e.g., "Build", "Unit Test", "SonarQube Scan"
@@ -64,6 +72,8 @@ stages: [{
     enum: ['pending', 'running', 'success', 'failure'], 
     default: 'pending' 
   },
+  start_time: { type: Date },
+  end_time: { type: Date },
   updated_at: { type: Date, default: Date.now }
 }],
 },

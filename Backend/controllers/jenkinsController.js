@@ -28,31 +28,31 @@ exports.handleJenkinsWebhook = async (req, res) => {
             userId = triggered_by.user_id;
         }
 
-        const newDeployment = await Deployment.create({
+        // Create deployment record
+        const newDeployment = new Deployment({
             project_id,
             environment_id,
-            pipeline_id: pipeline_id || "jenkins-" + Date.now(),
+            pipeline_id,
             version,
             branch,
-            triggered_by: {
-                source: 'jenkins',
-                username: triggered_by?.username || "Jenkins",
-                user_id: userId
-            },
-            status: 'success',
-            start_time: new Date(),
-            end_time: new Date(),
+            triggered_by,
             commit_message,
             commit_author,
             commit_author_email,
             commit_hash,
+            public_url,
+            node_name,
+            artifacts,
+            status: "running",
+            start_time: new Date(),
             stages: [
-                { name: "Checkout & Metadata", status: "success" },
-                { name: "Install & Build", status: "success" },
-                { name: "Deploy Frontend", status: "success" },
-                { name: "Update Tracker API", status: "success" }
+                { name: "Checkout SCM", status: "pending" },
+                { name: "Deploy with Docker Compose", status: "pending" },
+                { name: "Verify Containers", status: "pending" }
             ]
         });
+
+        await newDeployment.save();
 
         // Update Environment status
         await Environment.findByIdAndUpdate(environment_id, { 
