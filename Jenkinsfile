@@ -25,11 +25,11 @@ pipeline {
                 script {
                     echo "Extracting Git Metadata..."
                     checkout scm
-                    env.COMMIT_HASH = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
-                    env.COMMIT_MSG = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
-                    env.COMMIT_AUTHOR = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
-                    env.COMMIT_EMAIL = sh(script: "git log -1 --pretty=%ae", returnStdout: true).trim()
-                    env.PUBLIC_IP = sh(script: "curl -s http://checkip.amazonaws.com", returnStdout: true).trim()
+                    def localCommitHash = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                    def localCommitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                    def localCommitAuthor = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
+                    def localCommitEmail = sh(script: "git log -1 --pretty=%ae", returnStdout: true).trim()
+                    def localPublicIp = sh(script: "curl -s http://checkip.amazonaws.com", returnStdout: true).trim()
 
                     echo "Initializing Deployment Record in Tracker..."
                     def payload = [
@@ -38,15 +38,15 @@ pipeline {
                         pipeline_id: env.BUILD_NUMBER,
                         version: "1.0.${env.BUILD_NUMBER}",
                         branch: params.DEPLOY_BRANCH,
-                        commit_message: env.COMMIT_MSG,
-                        commit_author: env.COMMIT_AUTHOR,
-                        commit_author_email: env.COMMIT_EMAIL,
-                        commit_hash: env.COMMIT_HASH,
-                        public_url: "http://${env.PUBLIC_IP}",
+                        commit_message: localCommitMsg,
+                        commit_author: localCommitAuthor,
+                        commit_author_email: localCommitEmail,
+                        commit_hash: localCommitHash,
+                        public_url: "http://${localPublicIp}",
                         node_name: env.NODE_NAME ?: "master",
                         artifacts: [[name: "Static Assets", url: "frontend-dist-${env.BUILD_NUMBER}"]],
                         triggered_by: [
-                            username: env.COMMIT_AUTHOR,
+                            username: localCommitAuthor,
                             source: "jenkins"
                         ]
                     ]
