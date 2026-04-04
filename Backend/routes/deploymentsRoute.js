@@ -18,9 +18,9 @@ router.delete("/:id", protect, authorizeRoles("admin", "devops"), deploymentCont
 
 // --- CI/CD Pipeline Control ---
 // Overall status update
-router.patch("/:id/status", protect, authorizeRoles("admin", "devops"), deploymentController.updateDeploymentStatus);
+router.patch("/:id/status", deploymentController.updateDeploymentStatus);
 // Update a specific stage (e.g., Build stage finished)
-router.patch("/:id/stage", protect, authorizeRoles("admin", "devops"), deploymentController.updateStageStatus);
+router.patch("/:id/stage", deploymentController.updateStageStatus);
 // Trigger a rollback
 router.post("/:id/rollback", protect, authorizeRoles("admin", "devops"), deploymentController.rollbackDeployment);
 // Trigger a redeploy
