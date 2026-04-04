@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import ErrorPage from "./pages/ErrorPage";
 import DeploymentDetails from "./pages/DeploymentsDetails";
 
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
