@@ -214,6 +214,32 @@
 /* =========================
    CHARTS & GRAPHS
 ========================= */
+.premium-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-glow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 100px;
+  height: 100px;
+  filter: blur(50px);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.stat-glow.red { background: rgba(239, 68, 68, 0.4); }
+.stat-glow.blue { background: rgba(59, 130, 246, 0.4); }
+
 .charts {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -221,15 +247,7 @@
   margin-bottom: 32px;
 }
 
-.chart {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 24px;
-  border-radius: var(--radius-xl);
-  height: 320px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+.chart.large {
   display: flex;
   flex-direction: column;
 }
@@ -238,7 +256,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-main);
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 /* =========================
@@ -286,7 +304,7 @@
 /* =========================
    DASHBOARD SPECIFIC TABLES
 ========================= */
-.card table {
+.dashboard-table {
   width: 100%;
   border-collapse: collapse;
 }
