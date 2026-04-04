@@ -23,6 +23,8 @@ router.patch("/:id/status", protect, authorizeRoles("admin", "devops"), deployme
 router.patch("/:id/stage", protect, authorizeRoles("admin", "devops"), deploymentController.updateStageStatus);
 // Trigger a rollback
 router.post("/:id/rollback", protect, authorizeRoles("admin", "devops"), deploymentController.rollbackDeployment);
+// Trigger a redeploy
+router.post("/:id/redeploy", protect, authorizeRoles("admin", "devops"), deploymentController.redeployDeployment);
 
 // --- Monitoring ---
 router.get("/:id/logs", protect, deploymentController.getDeploymentLogs);

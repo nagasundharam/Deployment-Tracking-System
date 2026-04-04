@@ -252,7 +252,7 @@ exports.updateStageStatus = async (req, res) => {
 // Rollback: Creates a new deployment based on an old one
 exports.rollbackDeployment = async (req, res) => {
   try {
-    const original = await Deployment.findById(req.params.id);
+    const original = await Deployment.findById(req.params.id).populate("project_id", "name");
     const rollback = new Deployment({
       ...original.toObject(),
       _id: new mongoose.Types.ObjectId(),
@@ -261,8 +261,34 @@ exports.rollbackDeployment = async (req, res) => {
       stages: original.stages.map(s => ({ ...s, status: "pending" })),
       createdAt: new Date()
     });
-    await rollback.save();
-    res.status(201).json(rollback);
+    const saved = await rollback.save();
+
+    // Log the rollback
+    await createAuditEntry(req.user?._id || req.user?.id, "Rollback Initiated", `From: ${original.version} -> To: ${saved.version} (Project: ${original.project_id?.name})`, req.ip);
+
+    res.status(201).json(saved);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Redeploy: Restarts the same version
+exports.redeployDeployment = async (req, res) => {
+  try {
+    const original = await Deployment.findById(req.params.id).populate("project_id", "name");
+    const redeploy = new Deployment({
+      ...original.toObject(),
+      _id: new mongoose.Types.ObjectId(),
+      status: "pending",
+      stages: original.stages.map(s => ({ ...s, status: "pending" })),
+      createdAt: new Date()
+    });
+    const saved = await redeploy.save();
+
+    // Log the redeploy
+    await createAuditEntry(req.user?._id || req.user?.id, "Redeploy Initiated", `Version: ${original.version} (Project: ${original.project_id?.name})`, req.ip);
+
+    res.status(201).json(saved);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

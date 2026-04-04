@@ -116,6 +116,10 @@ const DeploymentDetails = () => {
     deployment &&
     (deployment.status === "success" || deployment.status === "failed");
 
+  const canRollback =
+    deployment &&
+    deployment.status === "success";
+
   const canReject =
     (role === "admin" || role === "devops") &&
     deployment?.status === "pending";
@@ -237,15 +241,50 @@ const DeploymentDetails = () => {
         console.error("Redeploy failed", msg);
         alert("Unable to redeploy.");
       } else {
-        await sendAuditEvent("Deployment Redeployed");
-        alert("Redeploy started with a new deployment instance.");
+        const data = await res.json();
+        alert("Redeploy initiated!");
+        navigate(`/deployments/${data._id}`);
       }
     } catch (err) {
       console.error("Redeploy error", err);
     } finally {
       setActionLoading(false);
     }
-  }, [canRedeploy, id, sendAuditEvent]);
+  }, [canRedeploy, id, navigate]);
+
+  const handleRollback = useCallback(async () => {
+    if (!canRollback) return;
+    const confirm = window.confirm("Are you sure you want to rollback to this version?");
+    if (!confirm) return;
+
+    try {
+      setActionLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/deployments/${id}/rollback`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!res.ok) {
+        const msg = await res.text();
+        console.error("Rollback failed", msg);
+        alert("Unable to rollback.");
+      } else {
+        const data = await res.json();
+        alert("Rollback initiated! Redirecting to new deployment...");
+        navigate(`/deployments/${data._id}`);
+      }
+    } catch (err) {
+      console.error("Rollback error", err);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [canRollback, id, navigate]);
 
   if (loading) return <div className="loader-container"><h2>Initializing Terminal...</h2></div>;
   if (!deployment) return <div className="error-container"><h2>Deployment Not Found</h2></div>;
@@ -319,6 +358,15 @@ const DeploymentDetails = () => {
               Redeploy
             </button>
           )}
+          {canRollback && (
+            <button
+              className="btn-secondary danger"
+              disabled={actionLoading}
+              onClick={handleRollback}
+            >
+              Rollback
+            </button>
+          )}
         </div>
       </div>
 
@@ -330,7 +378,15 @@ const DeploymentDetails = () => {
             <div className="meta-info">
               <p><strong>Version:</strong> {deployment.version}</p>
               <p><strong>Branch:</strong> {deployment.branch}</p>
-              <p><strong>Triggered By:</strong> {deployment.triggered_by?.username || "System"}</p>
+              <p><strong>Commit Hash:</strong> {deployment.commit_hash?.slice(0, 8) || "N/A"}</p>
+              <p><strong>Commit Author:</strong> {deployment.commit_author || deployment.triggered_by?.username || "System"}</p>
+              <p><strong>Message:</strong> {deployment.commit_message || "No commit message provided"}</p>
+              <p><strong>Started:</strong> {new Date(deployment.start_time || deployment.createdAt).toLocaleString()}</p>
+              {deployment.end_time && <p><strong>Finished:</strong> {new Date(deployment.end_time).toLocaleString()}</p>}
+              {deployment.start_time && deployment.end_time && (
+                <p><strong>Duration:</strong> {Math.round((new Date(deployment.end_time) - new Date(deployment.start_time)) / 1000)}s</p>
+              )}
+              <p><strong>Triggered By:</strong> {deployment.triggered_by?.source === "jenkins" ? "Jenkins CI" : (deployment.triggered_by?.username || "System")}</p>
             </div>
           </div>
 

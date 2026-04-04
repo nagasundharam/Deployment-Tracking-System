@@ -60,6 +60,18 @@ exports.handleJenkinsWebhook = async (req, res) => {
             last_deployment: newDeployment._id 
         });
 
+        // Create Audit Log Entry for the commit/deployment
+        try {
+            const { createAuditEntry } = require("./auditLogController");
+            // Use the first admin as a fallback if no specific user is linked
+            const admin = await User.findOne({ role: "admin" });
+            const action = `Jenkins Deployment: ${commit_message || "New Build"} (Hash: ${commit_hash || "N/A"})`;
+            const resource = `Project: ${project_id}`;
+            await createAuditEntry(admin?._id, action, resource, "Jenkins-CI");
+        } catch (auditError) {
+            console.error("Audit Log Error:", auditError);
+        }
+
         res.status(201).json({ message: "Deployment record created successfully", deployment: newDeployment });
     } catch (error) {
         console.error("Error handling Jenkins webhook:", error);
