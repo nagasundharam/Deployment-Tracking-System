@@ -133,49 +133,8 @@ const DeploymentDetails = () => {
     deployment?.status === "pending";
 
   const ensureStages = useMemo(() => {
-    if (!deployment) return [];
-    const defaultStages = [
-      "Build",
-      "Test",
-      "Security Scan",
-      "Deploy",
-      "Verify",
-    ];
-
-    if (Array.isArray(deployment.stages) && deployment.stages.length) {
-      // Ensure every known stage has a status; fallback to pending
-      return defaultStages.map((name, idx) => {
-        const existing =
-          deployment.stages.find(
-            (s) => s.name?.toLowerCase() === name.toLowerCase()
-          ) || deployment.stages[idx];
-        return {
-          name,
-          status: existing?.status || "pending",
-        };
-      });
-    }
-
-    // Derive simple stage progression from overall status
-    const overall = (deployment.status || "pending").toLowerCase();
-    const order = ["pending", "approved", "running", "success", "failed"];
-    const idx = order.indexOf(overall);
-
-    return defaultStages.map((name, index) => {
-      if (overall === "failed") {
-        if (index < 3) return { name, status: "success" };
-        if (index === 3) return { name, status: "failed" };
-        return { name, status: "pending" };
-      }
-      if (overall === "success") {
-        return { name, status: "success" };
-      }
-      if (overall === "running") {
-        if (index === 0) return { name, status: "running" };
-        return { name, status: "pending" };
-      }
-      return { name, status: "pending" };
-    });
+    if (!deployment || !Array.isArray(deployment.stages)) return [];
+    return deployment.stages;
   }, [deployment]);
 
   const updateStatus = useCallback(
@@ -346,17 +305,18 @@ const DeploymentDetails = () => {
                   <label>VERSION</label>
                   <div className="stat-val highlight-blue">● {deployment.version}</div>
                </div>
-               <div className="hero-stat">
-                  <label>COMMIT HASH</label>
-                  <div className="stat-val commit-link-wrapper">
-                     <span className="code-bracket">&lt;/&gt;</span> {deployment.commit_hash ? (
-                        <a href={deployment.project_id?.repo_url ? `${deployment.project_id.repo_url.replace('.git', '')}/commit/${deployment.commit_hash}` : "#"} target="_blank" rel="noopener noreferrer" className="short-hash">
+               {deployment.commit_hash && (
+                 <div className="hero-stat">
+                    <label>COMMIT HASH</label>
+                    <div className="stat-val commit-link-wrapper">
+                       <span className="code-bracket">&lt;/&gt;</span>
+                       <a href={deployment.project_id?.repo_url ? `${deployment.project_id.repo_url.replace('.git', '')}/commit/${deployment.commit_hash}` : "#"} target="_blank" rel="noopener noreferrer" className="short-hash">
                           {deployment.commit_hash.slice(0, 7)}
-                        </a>
-                     ) : "N/A"}
-                     <span className="copy-icon" onClick={() => navigator.clipboard.writeText(deployment.commit_hash)}>📋</span>
-                  </div>
-               </div>
+                       </a>
+                       <span className="copy-icon" onClick={() => navigator.clipboard.writeText(deployment.commit_hash)}>📋</span>
+                    </div>
+                 </div>
+               )}
                <div className="hero-stat">
                   <label>TRIGGERED BY</label>
                   <div className="stat-val author-flex">
@@ -402,35 +362,7 @@ const DeploymentDetails = () => {
             )}
           </div>
 
-          {/* Diff View / Config diff */}
-          <div className="diff-card">
-             <div className="diff-header">
-               <span>CONFIGURATION DIFF</span>
-               <div className="diff-stats">
-                  <span className="diff-add">+12 lines</span>
-                  <span className="diff-del">-4 lines</span>
-               </div>
-               <span className="diff-expand">⛶</span>
-             </div>
-             <div className="diff-content dark-terminal line-numbers">
-                {deployment.config_diff ? (
-                   <pre>{deployment.config_diff}</pre>
-                ) : (
-                   <pre>
-{`24  spec:
-25    replicas: 5
-26    strategy:
-27      type: RollingUpdate
-28      rollingUpdate:
-29        maxSurge: 25%
-30  # old resource limits
-31    resources:
-32      limits:
-33        cpu: "500m"`}
-                   </pre>
-                )}
-             </div>
-          </div>
+          {/* Configuration Diff Removed per user request */}
           
           {/* Live Logs Component if running or if user wants to see history */}
           {(deployment.status === "running" || logs.length > 0) && (
