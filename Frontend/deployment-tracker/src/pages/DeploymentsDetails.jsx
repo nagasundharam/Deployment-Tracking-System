@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "./DeploymentDetails.css";
 
 const DeploymentDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [deployment, setDeployment] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
