@@ -65,8 +65,15 @@ exports.handleJenkinsWebhook = async (req, res) => {
             const { createAuditEntry } = require("./auditLogController");
             // Use the first admin as a fallback if no specific user is linked
             const admin = await User.findOne({ role: "admin" });
+            let projectName = project_id;
+            try {
+                const projectDoc = await Project.findById(project_id);
+                if (projectDoc) projectName = projectDoc.name;
+            } catch (err) {
+                console.error("Could not find project name:", err);
+            }
             const action = `Jenkins Deployment: ${commit_message || "New Build"} (Hash: ${commit_hash || "N/A"})`;
-            const resource = `Project: ${project_id}`;
+            const resource = `Project: ${projectName}`;
             await createAuditEntry(admin?._id, action, resource, "Jenkins-CI");
         } catch (auditError) {
             console.error("Audit Log Error:", auditError);
