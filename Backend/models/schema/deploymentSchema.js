@@ -23,7 +23,7 @@ const deploymentSchema = new mongoose.Schema({
     triggered_by: {
   source: {
     type: String,
-    enum: ['github', 'manual', 'system'],
+    enum: ['github', 'manual', 'system', 'jenkins'],
     required: true
   },
   username: {
