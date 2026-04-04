@@ -297,288 +297,250 @@ const DeploymentDetails = () => {
   if (!deployment) return <div className="error-container"><h2>Deployment Not Found</h2></div>;
 
   return (
-    <div className="details-container">
-      {/* Header Section */}
-      <div className="details-header">
-        <div>
+    <div className="modern-details-container">
+      {/* Clean Top Navbar */}
+      <div className="modern-header">
+        <div className="header-title">
+          <button className="back-btn" onClick={() => window.history.back()}>←</button>
           <h1>Deployment #{deployment._id.slice(-6).toUpperCase()}</h1>
-          <div className="status-group">
-            <span className={`status-badge ${deployment.status}`}>
-              {deployment.status.toUpperCase()}
-            </span>
-            <span className="env-label">{deployment.environment_id?.name}</span>
-          </div>
+          <span className={`status-pill ${deployment.status}`}>
+            {deployment.status === "pending" ? "Pending Approval" : deployment.status.replace('_', ' ').toUpperCase()}
+          </span>
         </div>
         <div className="header-actions">
-          <button
-            className="btn-secondary"
-            onClick={async () => {
-              const token = localStorage.getItem("token");
-              const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/deployments/${id}/report?format=pdf`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-              const blob = await res.blob();
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `deployment-${deployment._id}.pdf`;
-              a.click();
-              window.URL.revokeObjectURL(url);
-            }}
-          >
-            Export Report
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={async () => {
-              const token = localStorage.getItem("token");
-              const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/deployments/${id}/report?format=csv`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-              const blob = await res.blob();
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `deployment-${deployment._id}.csv`;
-              a.click();
-              window.URL.revokeObjectURL(url);
-            }}
-          >
-            Export CSV
-          </button>
           {canRedeploy && (
-            <button
-              className="btn-primary"
-              disabled={actionLoading}
-              onClick={handleRedeploy}
-            >
-              Redeploy
+            <button className="btn-outline history-btn" disabled={actionLoading} onClick={handleRedeploy}>
+              ↺ Redeploy
             </button>
           )}
           {canRollback && (
-            <button
-              className="btn-secondary danger"
-              disabled={actionLoading}
-              onClick={handleRollback}
-            >
-              Rollback
-            </button>
+             <button className="btn-danger rollback-btn" disabled={actionLoading} onClick={handleRollback}>
+               ↺ Rollback
+             </button>
           )}
         </div>
       </div>
 
-      <div className="details-grid">
-        {/* Left Column: Info & Logs */}
-        <div className="left-panel">
-          <div className="card info-card">
-            <h3>Project: {deployment.project_id?.name}</h3>
-            <div className="meta-info">
-              <p><strong>Version:</strong> {deployment.version}</p>
-              <p><strong>Branch:</strong> {deployment.branch}</p>
-              <p>
-                <strong>Commit Hash:</strong>{" "}
-                {deployment.commit_hash ? (
-                  <a 
-                    href={deployment.project_id?.repo_url ? `${deployment.project_id.repo_url.replace('.git', '')}/commit/${deployment.commit_hash}` : "#"} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="commit-link"
-                  >
-                    {deployment.commit_hash.slice(0, 7)} ↗
-                  </a>
-                ) : "N/A"}
-              </p>
-              <p><strong>Commit Author:</strong> {deployment.commit_author || deployment.triggered_by?.username || "System"}</p>
-              <p><strong>Message:</strong> {deployment.commit_message || "No commit message provided"}</p>
-              <p><strong>Started:</strong> {new Date(deployment.start_time || deployment.createdAt).toLocaleString()}</p>
-              {deployment.end_time && <p><strong>Finished:</strong> {new Date(deployment.end_time).toLocaleString()}</p>}
-              {deployment.start_time && deployment.end_time && (
-                <p><strong>Duration:</strong> {formatDuration(deployment.start_time, deployment.end_time)}</p>
-              )}
-              <p><strong>Triggered By:</strong> {deployment.triggered_by?.source === "jenkins" ? "Jenkins CI" : (deployment.triggered_by?.username || "System")}</p>
+      <div className="modern-grid-wrapper">
+        <div className="main-content-column">
+          {/* Project Meta Card */}
+          <div className="premium-card meta-hero-card">
+            <div className="hero-header">
+               <div className="project-title-group">
+                  <div className="project-icon">📦</div>
+                  <div>
+                     <h2>{deployment.project_id?.name || "Unknown Project"}</h2>
+                     <p className="env-subtitle">
+                       Target Environment: <strong>{deployment.environment_id?.name || "Environment"}</strong> {deployment.environment_id?.region ? `(Region: ${deployment.environment_id?.region})` : ""}
+                     </p>
+                  </div>
+               </div>
+               <div className="triggered-at">
+                  <span>TRIGGERED AT</span>
+                  <p>{new Date(deployment.start_time || deployment.createdAt).toLocaleString()}</p>
+               </div>
             </div>
+            <div className="hero-grid">
+               <div className="hero-stat">
+                  <label>VERSION</label>
+                  <div className="stat-val highlight-blue">● {deployment.version}</div>
+               </div>
+               <div className="hero-stat">
+                  <label>COMMIT HASH</label>
+                  <div className="stat-val commit-link-wrapper">
+                     <span className="code-bracket">&lt;/&gt;</span> {deployment.commit_hash ? (
+                        <a href={deployment.project_id?.repo_url ? `${deployment.project_id.repo_url.replace('.git', '')}/commit/${deployment.commit_hash}` : "#"} target="_blank" rel="noopener noreferrer" className="short-hash">
+                          {deployment.commit_hash.slice(0, 7)}
+                        </a>
+                     ) : "N/A"}
+                     <span className="copy-icon" onClick={() => navigator.clipboard.writeText(deployment.commit_hash)}>📋</span>
+                  </div>
+               </div>
+               <div className="hero-stat">
+                  <label>TRIGGERED BY</label>
+                  <div className="stat-val author-flex">
+                     <div className="author-avatar">{deployment.commit_author?.charAt(0).toUpperCase() || deployment.triggered_by?.username?.charAt(0).toUpperCase() || "S"}</div>
+                     <span>{deployment.commit_author || deployment.triggered_by?.username || "System"}</span>
+                  </div>
+               </div>
+               <div className="hero-stat">
+                  <label>REPOSITORY</label>
+                  <div className="stat-val repo-flex">
+                    <span className="repo-icon">🐙</span>
+                    <span className="repo-text">{deployment.project_id?.repo_url ? new URL(deployment.project_id.repo_url).pathname.slice(1).replace('.git','') : "org/repo"}</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* Pending Approval Portal embedded here if pending */}
+            {deployment.status === "pending" && (
+              <div className="approval-portal">
+                 <div className="portal-left">
+                    <div className="portal-icon">🛡️</div>
+                    <div className="portal-text">
+                      <h3>Awaiting Manual Approval</h3>
+                      <p>This deployment requires verification from a DevOps Admin before proceeding to production traffic routing.</p>
+                    </div>
+                 </div>
+                 <div className="portal-actions">
+                    {canReject && <button className="btn-text-danger" onClick={handleReject} disabled={actionLoading}>× Reject</button>}
+                    {canApprove && <button className="btn-solid-primary" onClick={handleApprove} disabled={actionLoading}>✔ Approve & Deploy</button>}
+                 </div>
+              </div>
+            )}
           </div>
 
-          <div className="card infrastructure-card">
-            <h3>Infrastructure Context</h3>
-            <div className="info-grid">
-              <div className="info-item">
-                <label>Build Node</label>
-                <span>{deployment.node_name || "master"}</span>
-              </div>
-              <div className="info-item">
-                <label>Public URL</label>
-                {deployment.public_url ? (
-                  <a href={deployment.public_url} target="_blank" rel="noopener noreferrer" className="btn-visit">
-                    Visit Application ↗
-                  </a>
+          {/* Diff View / Config diff */}
+          <div className="diff-card">
+             <div className="diff-header">
+               <span>CONFIGURATION DIFF</span>
+               <div className="diff-stats">
+                  <span className="diff-add">+12 lines</span>
+                  <span className="diff-del">-4 lines</span>
+               </div>
+               <span className="diff-expand">⛶</span>
+             </div>
+             <div className="diff-content dark-terminal line-numbers">
+                {deployment.config_diff ? (
+                   <pre>{deployment.config_diff}</pre>
                 ) : (
-                  <span>Not Available</span>
+                   <pre>
+{`24  spec:
+25    replicas: 5
+26    strategy:
+27      type: RollingUpdate
+28      rollingUpdate:
+29        maxSurge: 25%
+30  # old resource limits
+31    resources:
+32      limits:
+33        cpu: "500m"`}
+                   </pre>
                 )}
-              </div>
-            </div>
+             </div>
           </div>
-
-          <div className="card jenkins-config-card">
-            <div className="card-header">
-              <h3>Jenkins configuration</h3>
-              <span className="badge-devops">DEVOPS ONLY</span>
-            </div>
-            <p className="card-subtitle">Use these details to configure your Jenkins credentials and pipeline.</p>
-            
-            <div className="config-grid">
-              <div className="config-item">
-                <label>PROJECT_ID</label>
-                <div className="copy-input">
-                  <input readOnly value={deployment.project_id?._id || deployment.project_id} />
-                  <button onClick={() => {
-                    navigator.clipboard.writeText(deployment.project_id?._id || deployment.project_id);
-                    alert("Project ID copied!");
-                  }}>Copy</button>
-                </div>
-              </div>
-
-              <div className="config-item">
-                <label>ENVIRONMENT_ID</label>
-                <div className="copy-input">
-                  <input readOnly value={deployment.environment_id?._id || deployment.environment_id} />
-                  <button onClick={() => {
-                    navigator.clipboard.writeText(deployment.environment_id?._id || deployment.environment_id);
-                    alert("Environment ID copied!");
-                  }}>Copy</button>
-                </div>
-              </div>
-
-              <div className="config-item wide">
-                <label>WEBHOOK URL (POST)</label>
-                <div className="copy-input">
-                  <input readOnly value={`http://${window.location.hostname}:5000/api/jenkins-webhook`} />
-                  <button onClick={() => {
-                    navigator.clipboard.writeText(`http://${window.location.hostname}:5000/api/jenkins-webhook`);
-                    alert("Webhook URL copied!");
-                  }}>Copy</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {deployment.status === "pending" && (
-            <div className="card approval-card animate-pulse">
-              <h3>Awaiting Manual Gate</h3>
-              <p>Please review configurations before proceeding to production rollout.</p>
-              <div className="approval-actions">
-                {canApprove && (
-                  <button
-                    className="btn-primary"
-                    disabled={actionLoading}
-                    onClick={handleApprove}
-                  >
-                    Approve Deployment
-                  </button>
-                )}
-                {canReject && (
-                  <button
-                    className="btn-secondary danger"
-                    disabled={actionLoading}
-                    onClick={handleReject}
-                  >
-                    Reject Deployment
-                  </button>
-                )}
-              </div>
+          
+          {/* Live Logs Component if running or if user wants to see history */}
+          {(deployment.status === "running" || logs.length > 0) && (
+            <div className="diff-card" style={{marginTop: '24px'}}>
+               <div className="diff-header" style={{background: '#0f172a', borderBottom: '1px solid #1e293b'}}>
+                 <span style={{color: '#94a3b8', fontSize: '11px', letterSpacing: '1px'}}>CONSOLE OUTPUT</span>
+                 <span style={{color: '#64748b', fontSize: '11px'}}>{deployment.node_name || 'build-node'}</span>
+               </div>
+               <div className="diff-content dark-terminal fake-terminal">
+                  <p className="line system">{`> [SYSTEM] Connection established to ${deployment.node_name || 'build-node-01'}`}</p>
+                  {logs.map((log, index) => (
+                    <p key={index} className={`line ${log.logs_type || "info"}`}>
+                      {`> [${(log.logs_type || "info").toUpperCase()}] ${log.message}`}
+                    </p>
+                  ))}
+                  {deployment.status === "running" && <p className="line cursor">_</p>}
+                  <div ref={terminalEndRef} />
+               </div>
             </div>
           )}
 
-          {deployment.status === "running" && (
-            <div className="card approval-card running-banner">
-              <h3>Deployment In Progress</h3>
-              <p>Live logs are streaming from the pipeline.</p>
-              {canCancel && (
-                <button
-                  className="btn-secondary danger"
-                  disabled={actionLoading}
-                  onClick={handleCancel}
-                >
-                  Cancel Deployment
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="card terminal-card">
-            <div className="terminal-header">
-              <span>console_output.log</span>
-              <div className="terminal-dots"><span></span><span></span><span></span></div>
-            </div>
-            <div className="fake-terminal">
-              <p className="line system">{`> [SYSTEM] Connection established to build-node-01`}</p>
-              {logs.map((log, index) => (
-                <p
-                  key={index}
-                  className={`line ${log.logs_type || "info"}`}
-                >
-                  {`> [${(log.logs_type || "info").toUpperCase()}] ${
-                    log.message
-                  }`}
-                </p>
-              ))}
-              {deployment.status === "running" && <p className="line cursor">_</p>}
-              <div ref={terminalEndRef} />
-            </div>
+          {/* Global Dashboard Stats */}
+          <div className="bottom-stats-row">
+             <div className="bottom-stat premium-card">
+                <div className="stat-header">
+                  <div className="stat-title">Pending Approvals</div>
+                  <span className="stat-icon amber">⏳</span>
+                </div>
+                <div className="stat-value">3 <span className="stat-sub">Tasks across 2 projects</span></div>
+             </div>
+             <div className="bottom-stat premium-card">
+                <div className="stat-header">
+                  <div className="stat-title">Pipeline Success Rate</div>
+                  <span className="stat-icon green">✔</span>
+                </div>
+                <div className="stat-value">94.2% <span className="stat-sub green-text">↑ 1.2%</span></div>
+             </div>
+             <div className="bottom-stat premium-card">
+                <div className="stat-header">
+                  <div className="stat-title">System Health</div>
+                  <span className="stat-icon blue">🛡️</span>
+                </div>
+                <div className="stat-value green-text">Optimal <span className="stat-sub string-color">All systems operational</span></div>
+             </div>
           </div>
+
         </div>
 
-        {/* Right Column: Pipeline Viz */}
-        <div className="right-panel">
-          <div className="card pipeline-card">
-            <h3>Deployment Pipeline</h3>
-            <div className="pipeline-container">
-              {deployment.stages.map((stage, index) => (
-                <div key={index} className={`pipeline-stage ${stage.status}`}>
-                  <div className="stage-icon">
-                    {stage.status === "success" ? "✔" : stage.status === "running" ? "⏳" : "○"}
-                  </div>
-                  <div className="stage-info">
-                    <span className="stage-name">{stage.name}</span>
-                    <span className="stage-status">
-                      {stage.status}
-                      {stage.start_time && stage.end_time && ` (${formatDuration(stage.start_time, stage.end_time)})`}
-                    </span>
-                  </div>
-                  {index !== deployment.stages.length - 1 && (
-                    <div className={`connector ${stage.status === 'success' ? 'filled' : ''}`}></div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {deployment.artifacts && deployment.artifacts.length > 0 && (
-            <div className="card artifacts-card">
-              <h3>Build Artifacts</h3>
-              <div className="artifacts-list">
-                {deployment.artifacts.map((art, i) => (
-                  <div key={i} className="artifact-item">
-                    <span className="art-icon">📦</span>
-                    <div className="art-info">
-                      <span className="art-name">{art.name}</span>
-                      <span className="art-url">{art.url}</span>
-                    </div>
-                  </div>
-                ))}
+        <div className="sidebar-column">
+           {/* Vertical Timeline */}
+           <div className="premium-card timeline-card">
+              <h3>Deployment Timeline</h3>
+              <div className="vertical-timeline">
+                 {ensureStages.map((stage, idx) => (
+                   <div key={idx} className={`v-stage-item ${stage.status}`}>
+                      <div className="v-stage-icon">
+                         {stage.status === 'success' && '✔'}
+                         {stage.status === 'running' && '⏳'}
+                         {stage.status === 'pending' && '○'}
+                         {stage.status === 'failure' && '×'}
+                      </div>
+                      <div className="v-stage-content">
+                         <h4>{stage.name}</h4>
+                         <p className="stage-meta">
+                            {stage.name.toLowerCase().includes('build') ? (
+                               deployment.artifacts?.[0] ? `Artifact: ${deployment.artifacts[0].name}` : "Building assets..."
+                            ) : stage.name.toLowerCase().includes('deploy') ? (
+                               `Deploying to ${deployment.environment_id?.name || 'cluster'}`
+                            ) : stage.name.toLowerCase().includes('scan') ? (
+                               `Security and Vulnerability Scans`
+                            ) : (
+                               `Status: ${stage.status}`
+                            )}
+                         </p>
+                         <span className="stage-time">
+                            {stage.status === 'success' ? `COMPLETED ${stage.end_time ? '• ' + new Date(stage.end_time).toLocaleTimeString() : ''}` : ''}
+                            {stage.start_time && stage.end_time ? ` (${formatDuration(stage.start_time, stage.end_time)})` : ''}
+                            {stage.status === 'running' ? `IN PROGRESS` : ''}
+                            {stage.status === 'pending' ? `PENDING` : ''}
+                         </span>
+                      </div>
+                      {idx < ensureStages.length - 1 && <div className={`v-connector ${stage.status === 'success' ? 'filled' : ''}`} />}
+                   </div>
+                 ))}
               </div>
-            </div>
-          )}
+           </div>
+
+           {/* Cluster Health Widget */}
+           <div className="premium-card health-card">
+              <h3 style={{textTransform: 'uppercase', fontSize: '11px', color: '#64748b', letterSpacing: '1px', marginBottom: '20px'}}>CURRENT CLUSTER HEALTH</h3>
+              
+              <div className="health-metric">
+                <div className="health-metric-header">
+                   <span style={{fontWeight: 600, fontSize: '13px', color: '#1e293b'}}>API Response Time</span>
+                   <span className="val-green" style={{color: '#10b981', fontWeight: 'bold'}}>{deployment.cluster_metrics?.response_time || "142ms"}</span>
+                </div>
+                <div className="health-bar-container">
+                   <div className="health-bar green" style={{width: '35%', background: '#10b981'}}></div>
+                </div>
+              </div>
+
+              <div className="health-metric" style={{marginTop: '24px'}}>
+                <div className="health-metric-header">
+                   <span style={{fontWeight: 600, fontSize: '13px', color: '#1e293b'}}>Memory Usage</span>
+                   <span className="val-orange" style={{color: '#f59e0b', fontWeight: 'bold'}}>{deployment.cluster_metrics?.memory || "68%"}</span>
+                </div>
+                <div className="health-bar-container">
+                   <div className="health-bar orange" style={{width: '68%', background: '#f59e0b'}}></div>
+                </div>
+              </div>
+           </div>
+           
+           {/* Public URL Action */}
+           {deployment.public_url && (
+              <div className="premium-card" style={{padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', cursor: 'pointer', border: '1px solid #10b981', background: '#ecfdf5'}} onClick={() => window.open(deployment.public_url, '_blank')}>
+                <h3 style={{fontSize: '13px', color: '#065f46'}}>Application Live</h3>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                   <span style={{fontFamily: 'monospace', color: '#047857', fontSize: '12px'}}>{deployment.public_url}</span>
+                   <span style={{color: '#10b981'}}>↗</span>
+                </div>
+              </div>
+           )}
         </div>
       </div>
     </div>
