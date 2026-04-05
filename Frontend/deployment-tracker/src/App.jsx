@@ -40,6 +40,9 @@ const router = createBrowserRouter(
         <Route path="environments" element={<Environments />} />
         <Route path="audit-logs" element={<AuditLogs />} />
         <Route path="settings" element={<Settings />} />
+        
+        {/* Catch-All 404 Route */}
+        <Route path="*" element={<ErrorPage />} />
       </Route>
       </Route>
 
