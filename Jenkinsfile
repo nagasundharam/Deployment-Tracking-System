@@ -4,13 +4,14 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'PROJECT_ID', defaultValue: '69d0996c860c3a42c3d8de5b', description: 'Project ID')
-        string(name: 'ENVIRONMENT_ID', defaultValue: '69d099d1860c3a42c3d8de6d', description: 'Environment ID')
-        string(name: 'DEPLOY_BRANCH', defaultValue: 'main', description: 'Branch')
-        string(name: 'EC2_HOST', defaultValue: '34.204.195.105', description: 'Backend Host')
+        string(name: 'PROJECT_ID', defaultValue: '69d0996c860c3a42c3d8de5b', description: 'The unique ID of the project in the tracker')
+        string(name: 'ENVIRONMENT_ID', defaultValue: '69d099d1860c3a42c3d8de6d', description: 'The target environment ID')
+        string(name: 'DEPLOY_BRANCH', defaultValue: 'main', description: 'The branch being deployed')
+        string(name: 'EC2_HOST', defaultValue: '34.204.195.105', description: 'The IP/Host of your Deployment Tracker backend')
     }
+
     environment {
-        // These must match the IDs in your screenshot exactly
+        // Mapping Jenkins Credentials to Environment Variables
         MONGO_URI     = credentials('MONGO_URI')
         JWT_SECRET    = credentials('JWT_SECRET')
         DATABASE_PORT = credentials('DATABASE_PORT')
@@ -25,6 +26,7 @@ pipeline {
         stage('Initialize Tracker') {
             steps {
                 script {
+                    echo "Extracting Git Metadata..."
                     checkout scm
                     def localCommitHash = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
                     def localCommitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
@@ -49,9 +51,22 @@ pipeline {
 
                     writeFile file: 'initial_payload.json', text: JsonOutput.toJson(payload)
                     
-                    // This will now work because the backend will be UP after the first successful run
-                    def response = sh(script: "curl -s -X POST ${env.VITE_API_URL}/jenkins-webhook -H 'Content-Type: application/json' -d @initial_payload.json", returnStdout: true)
-                    env.DEPLOYMENT_ID = sh(script: "echo '${response}' | grep -oP '\"_id\":\"\\K[^\"]+' | head -1", returnStdout: true).trim()
+                    echo "Attempting to initialize Deployment Record..."
+                    
+                    // FAIL-SAFE: Try-Catch block to prevent Exit Code 7 from stopping the build
+                    try {
+                        def response = sh(script: "curl -s --max-time 10 -X POST ${env.VITE_API_URL}/jenkins-webhook -H 'Content-Type: application/json' -d @initial_payload.json", returnStdout: true).trim()
+                        env.DEPLOYMENT_ID = sh(script: "echo '${response}' | grep -oP '\"_id\":\"\\K[^\"]+' | head -1", returnStdout: true).trim()
+                        
+                        if (env.DEPLOYMENT_ID) {
+                            echo "Tracker Initialized successfully. ID: ${env.DEPLOYMENT_ID}"
+                        }
+                    } catch (Exception e) {
+                        echo "--------------------------------------------------------------------------------"
+                        echo "WARNING: Could not connect to Tracker Backend. Error: ${e.message}"
+                        echo "Proceeding to Deploy stage to ensure containers are updated and healthy."
+                        echo "--------------------------------------------------------------------------------"
+                    }
                 }
             }
         }
@@ -59,14 +74,16 @@ pipeline {
         stage('Deploy Services (Docker)') {
             steps {
                 script {
+                    // This helper will only run if DEPLOYMENT_ID was captured
                     notifyStage("Deploy Services", "running")
                     
-                    // FIX 2: This is the command that actually fixes your site.
-                    // It passes the MONGO_URI from Jenkins into the Docker Compose environment.
+                    echo "Starting Docker Deployment..."
                     sh """
                         export MONGO_URI='${env.MONGO_URI}'
                         export JWT_SECRET='${env.JWT_SECRET}'
+                        export PORT='${env.DATABASE_PORT}'
                         export VITE_API_URL='${env.VITE_API_URL}'
+                        
                         docker compose up -d --build --force-recreate
                     """
                     
@@ -83,6 +100,7 @@ pipeline {
                     sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"success\"}'"
                 }
             }
+            echo "DEPLOYMENT SUCCESSFUL"
         }
         failure {
             script {
@@ -90,14 +108,19 @@ pipeline {
                     sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"failed\"}'"
                 }
             }
+            echo "DEPLOYMENT FAILED"
         }
     }
 }
 
 def notifyStage(String name, String status) {
     if (env.DEPLOYMENT_ID) {
-        def stagePayload = [stageName: name, status: status]
-        writeFile file: "stage_data.json", text: JsonOutput.toJson(stagePayload)
-        sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/stage -H 'Content-Type: application/json' -d @stage_data.json"
+        try {
+            def stagePayload = [stageName: name, status: status]
+            writeFile file: "stage_data.json", text: JsonOutput.toJson(stagePayload)
+            sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/stage -H 'Content-Type: application/json' -d @stage_data.json"
+        } catch (Exception e) {
+            echo "Notification failed for ${name}: ${e.message}"
+        }
     }
 }
