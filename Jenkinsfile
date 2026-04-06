@@ -84,8 +84,8 @@ pipeline {
                     notifyStage("Install & Build", "running")
                     echo "Starting frontend build process..."
                     
-                    // INTENTIONAL FAILURE FOR UI VERIFICATION
-                    sh 'echo "Simulating failure in Install & Build stage..." && exit 1'
+                    // INTENTIONAL FAILURE FOR UI VERIFICATION (temporarily disabled to deploy backend fix)
+                    sh 'echo "Simulating failure in Install & Build stage..."'
                     
                     notifyStage("Install & Build", "success")
                 }
