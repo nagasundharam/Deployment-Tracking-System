@@ -154,11 +154,10 @@ export default function Dashboard() {
 
   const PIE_COLORS = ["#10b981", "#3b82f6", "#ef4444"];
 
-  const recentFailures = useMemo(() => {
+  const recentDeployments = useMemo(() => {
     return deployments
-      .filter(d => ["failed", "failure"].includes(d.status.toLowerCase()))
       .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 5);
+      .slice(0, 10);
   }, [deployments]);
 
   if (loading) {
@@ -284,39 +283,53 @@ export default function Dashboard() {
         {/* Table */}
         <div className="card premium-card">
           <div className="card-header" style={{ marginBottom: '16px' }}>
-            <h3>Recent Failed Deployments</h3>
+            <h3>Recent Deployments</h3>
             <button className="text-btn" onClick={() => navigate("/deployments")}>View All</button>
           </div>
 
           <table className="dashboard-table">
             <thead>
               <tr>
-                <th>Project</th>
-                <th>Environment</th>
-                <th>Version</th>
-                <th>Failed At</th>
+                <th>Build ID</th>
+                <th>Project / Env</th>
+                <th>Commit Message</th>
+                <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {recentFailures.length > 0 ? (
-                 recentFailures.map(dep => (
+              {recentDeployments.length > 0 ? (
+                 recentDeployments.map(dep => {
+                   const statusName = dep.status?.toLowerCase() || 'pending';
+                   const badgeClass = (statusName === 'failed' || statusName === 'failure' || statusName === 'rejected') ? 'error' : (statusName === 'success' || statusName === 'approved' ? 'success' : 'pending');
+                   
+                   return (
                    <tr key={dep._id}>
-                     <td style={{fontWeight: 600}}>{dep.project_id?.name || "Unknown"}</td>
-                     <td><span className="badge badge-error">{dep.environment_id?.name || "Unknown"}</span></td>
-                     <td style={{fontFamily: 'monospace', color: '#818cf8'}}>{dep.version}</td>
-                     <td style={{color: '#94a3b8'}}>{timeSince(dep.createdAt)}</td>
+                     <td style={{fontFamily: 'monospace', fontWeight: 600, color: '#818cf8'}}>#{dep.pipeline_id || dep._id.slice(-6).toUpperCase()}</td>
                      <td>
-                        <button className="danger-btn" onClick={() => navigate(`/deployments/${dep._id}`)}>
-                          Inspect
+                        <div style={{fontWeight: 600}}>{dep.project_id?.name || "Unknown Project"}</div>
+                        <div style={{fontSize: '12px', color: '#94a3b8'}}>{dep.environment_id?.name || "Unknown Environment"}</div>
+                     </td>
+                     <td style={{maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                        {dep.commit_message || "Manual Trigger"}
+                     </td>
+                     <td>
+                        <span className={`badge badge-${badgeClass}`} style={{textTransform: 'uppercase'}}>
+                           {dep.status}
+                        </span>
+                        <div style={{fontSize: '11px', color: '#64748b', marginTop: '4px'}}>{timeSince(dep.createdAt)}</div>
+                     </td>
+                     <td>
+                        <button className="btn-secondary" style={{padding: '6px 12px', fontSize: '13px'}} onClick={() => navigate(`/deployments/${dep._id}`)}>
+                          View Details
                         </button>
                      </td>
                    </tr>
-                 ))
+                 )})
               ) : (
                 <tr>
                    <td colSpan="5" className="no-data" style={{textAlign: 'center', padding: '32px', color: '#64748b'}}>
-                      No recent deployment failures detected. System is healthy!
+                      No deployments found.
                    </td>
                 </tr>
               )}

@@ -46,7 +46,12 @@ pipeline {
                         commit_hash: localCommitHash,
                         public_url: "http://${env.PUBLIC_IP}",
                         node_name: env.NODE_NAME ?: "master",
-                        triggered_by: [username: localCommitAuthor, source: "jenkins"]
+                        triggered_by: [username: localCommitAuthor, source: "jenkins"],
+                        stages: [
+                            [name: "Initialize Tracker", status: "pending"],
+                            [name: "Install & Build", status: "pending"],
+                            [name: "Deploy Services", status: "pending"]
+                        ]
                     ]
 
                     writeFile file: 'initial_payload.json', text: JsonOutput.toJson(payload)
@@ -60,6 +65,8 @@ pipeline {
                         
                         if (env.DEPLOYMENT_ID) {
                             echo "Tracker Initialized successfully. ID: ${env.DEPLOYMENT_ID}"
+                            // Update this stage to success now that we have an initialized deployment
+                            notifyStage("Initialize Tracker", "success")
                         }
                     } catch (Exception e) {
                         echo "--------------------------------------------------------------------------------"
@@ -71,7 +78,21 @@ pipeline {
             }
         }
 
-        stage('Deploy Services (Docker)') {
+        stage('Install & Build') {
+            steps {
+                script {
+                    notifyStage("Install & Build", "running")
+                    echo "Starting frontend build process..."
+                    
+                    // INTENTIONAL FAILURE FOR UI VERIFICATION
+                    sh 'echo "Simulating failure in Install & Build stage..." && exit 1'
+                    
+                    notifyStage("Install & Build", "success")
+                }
+            }
+        }
+
+        stage('Deploy Services') {
             steps {
                 script {
                     // This helper will only run if DEPLOYMENT_ID was captured
@@ -105,6 +126,9 @@ pipeline {
         failure {
             script {
                 if (env.DEPLOYMENT_ID) {
+                    // Update the failed stage immediately
+                    notifyStage("Install & Build", "failure")
+                    // Mark entire deployment blocked/failed
                     sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"failed\"}'"
                 }
             }

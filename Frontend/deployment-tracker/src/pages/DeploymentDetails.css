@@ -496,7 +496,7 @@
   opacity: 0.5;
 }
 
-.v-stage-item.success, .v-stage-item.running {
+.v-stage-item.success, .v-stage-item.running, .v-stage-item.failure, .v-stage-item.failed {
   opacity: 1;
 }
 
@@ -517,7 +517,15 @@
 
 .v-stage-item.success .v-stage-icon { background: #22c55e; color: white; }
 .v-stage-item.running .v-stage-icon { background: #3b82f6; color: white; animation: pulse-shadow 2s infinite; }
-.v-stage-item.failure .v-stage-icon { background: #ef4444; color: white; }
+.v-stage-item.failure .v-stage-icon, .v-stage-item.failed .v-stage-icon { 
+  background: #ef4444; 
+  color: white; 
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+.v-stage-item.failure h4, .v-stage-item.failed h4 {
+  color: #ef4444 !important;
+}
 
 .v-connector {
   position: absolute;

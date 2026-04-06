@@ -15,7 +15,11 @@ exports.handleJenkinsWebhook = async (req, res) => {
             commit_message,
             commit_author,
             commit_author_email,
-            commit_hash
+            commit_hash,
+            public_url,
+            node_name,
+            artifacts,
+            stages
         } = req.body;   
         
         if (!project_id || !environment_id) {
@@ -27,6 +31,12 @@ exports.handleJenkinsWebhook = async (req, res) => {
         if (triggered_by?.user_id && triggered_by.user_id !== "system") {
             userId = triggered_by.user_id;
         }
+        
+        const initialStages = stages || [
+            { name: "Checkout SCM", status: "pending" },
+            { name: "Deploy with Docker Compose", status: "pending" },
+            { name: "Verify Containers", status: "pending" }
+        ];
 
         // Create deployment record
         const newDeployment = new Deployment({
@@ -45,11 +55,7 @@ exports.handleJenkinsWebhook = async (req, res) => {
             artifacts,
             status: "running",
             start_time: new Date(),
-            stages: [
-                { name: "Checkout SCM", status: "pending" },
-                { name: "Deploy with Docker Compose", status: "pending" },
-                { name: "Verify Containers", status: "pending" }
-            ]
+            stages: initialStages
         });
 
         await newDeployment.save();
