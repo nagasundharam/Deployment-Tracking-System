@@ -422,7 +422,7 @@ const DeploymentDetails = () => {
                          {stage.status === 'success' && '✔'}
                          {stage.status === 'running' && '⏳'}
                          {stage.status === 'pending' && '○'}
-                         {stage.status === 'failure' && '×'}
+                         {(stage.status === 'failure' || stage.status === 'failed') && '×'}
                       </div>
                       <div className="v-stage-content">
                          <h4>{stage.name}</h4>
