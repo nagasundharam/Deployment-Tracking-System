@@ -476,7 +476,7 @@ const DeploymentDetails = () => {
            </div>
            
            {/* Public URL Action */}
-           {deployment.public_url && (
+           {deployment.public_url && deployment.status === "success" && (
               <div className="premium-card" style={{padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', cursor: 'pointer', border: '1px solid #10b981', background: '#ecfdf5'}} onClick={() => window.open(deployment.public_url, '_blank')}>
                 <h3 style={{fontSize: '13px', color: '#065f46'}}>Application Live</h3>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>

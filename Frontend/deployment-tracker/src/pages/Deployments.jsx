@@ -344,7 +344,7 @@ export default function Deployments() {
           <thead>
             <tr>
               <th>Project</th>
-              <th>Version</th>
+              <th>Deployment Name</th>
               <th>Environment</th>
               <th>Status</th>
               <th>Triggered By</th>
@@ -356,7 +356,9 @@ export default function Deployments() {
             {paginatedData.map((d) => (
               <tr key={d.id} onClick={() => navigate(`/deployments/${d.id}`)}>
                 <td className="project-cell">{d.project}</td>
-                <td className="version-cell">{d.version}</td>
+                <td className="version-cell" style={{fontFamily: 'monospace', fontWeight: 600}}>
+                   {d.version}
+                </td>
                 <td><span className={`env-badge ${d.env.toLowerCase()}`}>{d.env}</span></td>
                 <td>
                   <span
