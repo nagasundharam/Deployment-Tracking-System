@@ -391,7 +391,7 @@ const DeploymentDetails = () => {
                   <div className="stat-title">Pending Approvals</div>
                   <span className="stat-icon amber">⏳</span>
                 </div>
-                <div className="stat-value">3 <span className="stat-sub">Tasks across 2 projects</span></div>
+                <div className="stat-value">3 <span className="stat-sub">Tasks\ across 2 projects</span></div>
              </div>
              <div className="bottom-stat premium-card">
                 <div className="stat-header">
