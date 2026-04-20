@@ -475,11 +475,11 @@
 
 .green-text { color: #059669 !important; }
 
-/* Vertical Timeline Redesign - Premium Look */
+/* Vertical Timeline Redesign - High Contrast & Visibility */
 .timeline-card {
   background: white;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* Stronger shadow for depth */
   overflow: hidden;
   position: relative;
 }
@@ -488,9 +488,9 @@
   margin: 0 0 24px 0;
   font-size: 14px;
   font-weight: 800;
-  color: #0f172a;
+  color: #1e293b; /* Darker title */
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   border-bottom: 1px solid #f1f5f9;
   padding-bottom: 16px;
 }
@@ -499,23 +499,25 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  padding-left: 5px; /* Better alignment */
 }
 
 .v-stage-item {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   position: relative;
-  padding-bottom: 32px;
+  padding-bottom: 40px;
   z-index: 2;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
 
 .v-stage-item:last-child {
   padding-bottom: 0;
 }
 
+/* Remove opacity: 0.6 - making it fully visible but keeping colors muted */
 .v-stage-item.pending {
-  opacity: 0.6;
+  opacity: 1; 
 }
 
 .v-stage-icon-wrapper {
@@ -525,79 +527,82 @@
 }
 
 .v-stage-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
   border: 2px solid white;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Success State - Emerald */
+/* Success State - Vibrant Emerald */
 .v-stage-item.success .v-stage-icon {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-/* Running State - Indigo */
+/* Running State - Deep Indigo */
 .v-stage-item.running .v-stage-icon {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
   color: white;
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
   animation: pulse-ring 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
-/* Failure State - Rose */
+/* Failure State - Bright Rose */
 .v-stage-item.failure .v-stage-icon,
 .v-stage-item.failed .v-stage-icon {
   background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   color: white;
-  box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
 }
 
-/* Pending State - Slate */
+/* Pending State - Clearly defined Slate */
 .v-stage-item.pending .v-stage-icon {
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  color: #94a3b8;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1; /* Darker border for visibility */
+  color: #64748b; /* Stronger gray */
 }
 
 .v-connector {
   position: absolute;
-  top: 36px;
-  left: 15px;
+  top: 40px;
+  left: 17px;
   width: 2px;
-  height: calc(100% - 32px);
-  background: #f1f5f9;
+  height: calc(100% - 36px);
+  background: #e2e8f0;
   z-index: 1;
-  transition: all 0.5s ease;
 }
 
 .v-connector.filled {
-  background: linear-gradient(to bottom, #10b981, #d1fae5);
+  background: #10b981;
 }
 
 .v-connector.active {
-  background: linear-gradient(to bottom, #10b981, #6366f1);
+  background: linear-gradient(to bottom, #10b981, #4f46e5);
   background-size: 100% 200%;
-  animation: flow 2s linear infinite;
+  animation: flow 1.5s linear infinite;
 }
 
 .v-stage-content {
   flex: 1;
-  padding-top: 4px;
+  padding-top: 6px;
 }
 
 .v-stage-content h4 {
   margin: 0 0 6px 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
-  transition: color 0.3s ease;
+  color: #0f172a; /* High contrast text */
+}
+
+.v-stage-item.pending h4 {
+  color: #475569; /* Slightly muted but still very readable */
 }
 
 .v-stage-item.running h4 {
@@ -610,45 +615,62 @@
 }
 
 .v-stage-content .stage-meta {
-  margin: 0 0 8px 0;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.4;
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  color: #334155; /* Darker gray for description */
+  line-height: 1.5;
 }
 
 .v-stage-content .stage-time-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  color: #94a3b8;
+  gap: 8px;
+  font-size: 11px;
+  color: #475569;
   font-weight: 700;
   text-transform: uppercase;
-  background: #f8fafc;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid #f1f5f9;
+  background: #f1f5f9;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.v-stage-item.success .stage-time-badge {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #d1fae5;
 }
 
 .v-stage-item.running .stage-time-badge {
-  color: #4f46e5;
+  color: #3730a3;
   background: #eef2ff;
   border-color: #e0e7ff;
 }
 
-.v-stage-item.success .v-stage-content h4 {
-  color: #0f172a;
+.v-stage-item.pending .stage-time-badge {
+  color: #64748b;
+  background: #f8fafc;
 }
 
 @keyframes pulse-ring {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
 }
 
 @keyframes flow {
   0% { background-position: 0% 0%; }
   100% { background-position: 0% 100%; }
+}
+
+@keyframes spin-loader {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-loader {
+  animation: spin-loader 2s linear infinite;
 }
 
 /* Cluster Health Widget */
