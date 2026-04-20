@@ -63,16 +63,15 @@ pipeline {
                         def response = sh(script: "curl -s --max-time 10 -X POST ${env.VITE_API_URL}/jenkins-webhook -H 'Content-Type: application/json' -d @initial_payload.json", returnStdout: true).trim()
                         echo "Raw Response: ${response}"
                         
-                        // Extract the ID using Python 3 (ignore shell quote hell)
+                        // Use the Pipeline Utility Steps plugin to read the JSON comfortably
                         writeFile file: 'response.json', text: response
-                        env.DEPLOYMENT_ID = sh(script: "python3 -c \"import json; print(json.load(open('response.json'))['deployment']['_id'])\"", returnStdout: true).trim()
+                        def json = readJSON file: 'response.json'
+                        env.DEPLOYMENT_ID = json.deployment._id
                         
-                        if (env.DEPLOYMENT_ID && env.DEPLOYMENT_ID != "null") {
+                        if (env.DEPLOYMENT_ID) {
                             echo "Tracker Initialized successfully. ID: ${env.DEPLOYMENT_ID}"
                             // Update this stage to success now that we have an initialized deployment
                             notifyStage("Initialize Tracker", "success")
-                        } else {
-                            echo "ERROR: Could not find deployment ID in response. Extracted: ${env.DEPLOYMENT_ID}"
                         }
                     } catch (Exception e) {
                         echo "--------------------------------------------------------------------------------"
