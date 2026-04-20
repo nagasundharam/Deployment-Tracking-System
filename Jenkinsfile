@@ -63,13 +63,15 @@ pipeline {
                         def response = sh(script: "curl -s --max-time 10 -X POST ${env.VITE_API_URL}/jenkins-webhook -H 'Content-Type: application/json' -d @initial_payload.json", returnStdout: true).trim()
                         echo "Raw Response: ${response}"
                         
-                        def json = new groovy.json.JsonSlurper().parseText(response)
-                        env.DEPLOYMENT_ID = json.deployment._id
+                        // Extract the ID using a more robust grep pattern (looking for the 24-char mongo ID)
+                        env.DEPLOYMENT_ID = sh(script: "echo '${response}' | grep -oP '\"_id\":\"\\K[0-9a-f]{24}' | head -1", returnStdout: true).trim()
                         
                         if (env.DEPLOYMENT_ID) {
                             echo "Tracker Initialized successfully. ID: ${env.DEPLOYMENT_ID}"
                             // Update this stage to success now that we have an initialized deployment
                             notifyStage("Initialize Tracker", "success")
+                        } else {
+                            echo "ERROR: Could not find deployment ID in response."
                         }
                     } catch (Exception e) {
                         echo "--------------------------------------------------------------------------------"
