@@ -221,7 +221,12 @@ exports.updateDeploymentStatus = async (req, res) => {
       updateData.end_time = new Date();
     }
 
+    console.log(`Updating deployment ${req.params.id} overall status to: ${status}`);
     const updated = await Deployment.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    
+    if (!updated) {
+      console.error(`Deployment ${req.params.id} not found during status update`);
+    }
 
     // When a deployment moves to running via manual trigger, invoke simulator
     if (status === "running") {
@@ -238,6 +243,22 @@ exports.updateDeploymentStatus = async (req, res) => {
 exports.updateStageStatus = async (req, res) => {
   try {
     const { stageName, status } = req.body;
+    const trimmedStageName = stageName ? stageName.trim() : "";
+    console.log(`[STAGE UPDATE] ID: ${req.params.id}, Stage: "${trimmedStageName}", Status: "${status}"`);
+    
+    // Find the deployment first to debug
+    const deployment = await Deployment.findById(req.params.id);
+    if (!deployment) {
+      console.warn(`[STAGE UPDATE FAILED] Deployment ${req.params.id} not found`);
+      return res.status(404).json({ message: "Deployment not found" });
+    }
+
+    const stageExists = deployment.stages.some(s => s.name === trimmedStageName);
+    if (!stageExists) {
+      console.warn(`[STAGE UPDATE FAILED] Stage "${trimmedStageName}" not found in [${deployment.stages.map(s => s.name).join(", ")}]`);
+      return res.status(404).json({ message: `Stage "${trimmedStageName}" not found in this deployment` });
+    }
+
     const updateData = { 
       "stages.$.status": status, 
       "stages.$.updated_at": new Date() 
@@ -250,12 +271,15 @@ exports.updateStageStatus = async (req, res) => {
     }
 
     const updated = await Deployment.findOneAndUpdate(
-      { _id: req.params.id, "stages.name": stageName },
+      { _id: req.params.id, "stages.name": trimmedStageName },
       { $set: updateData },
       { new: true }
     );
+
+    console.log(`[STAGE UPDATE SUCCESS] Stage "${trimmedStageName}" is now ${status}`);
     res.json(updated);
   } catch (err) {
+    console.error("[STAGE UPDATE ERROR]", err);
     res.status(400).json({ message: err.message });
   }
 };

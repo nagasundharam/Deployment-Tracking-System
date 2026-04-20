@@ -28,9 +28,17 @@ async function runPipelineForDeployment(deploymentId) {
       return;
     }
 
+    console.log(`Starting simulation for Deployment: ${deploymentId}`);
+
     for (let i = 0; i < dep.stages.length; i++) {
       const stage = dep.stages[i];
       const delay = STAGE_DURATIONS_MS[stage.name] || 2000;
+
+      // Mark stage as running
+      await Deployment.findOneAndUpdate(
+        { _id: deploymentId, "stages.name": stage.name },
+        { $set: { "stages.$.status": "running", "stages.$.start_time": new Date() } }
+      );
 
       await axios.post(`http://localhost:5000/api/logs`, {
         deployment_id: dep._id,
@@ -40,6 +48,12 @@ async function runPipelineForDeployment(deploymentId) {
 
       await new Promise((resolve) => setTimeout(resolve, delay));
 
+      // Mark stage as success
+      await Deployment.findOneAndUpdate(
+        { _id: deploymentId, "stages.name": stage.name },
+        { $set: { "stages.$.status": "success", "stages.$.end_time": new Date() } }
+      );
+
       await axios.post(`http://localhost:5000/api/logs`, {
         deployment_id: dep._id,
         logs_type: "build",
@@ -47,11 +61,19 @@ async function runPipelineForDeployment(deploymentId) {
       });
     }
 
+    // Finalize deployment as success
+    await Deployment.findByIdAndUpdate(deploymentId, { 
+      status: "success", 
+      end_time: new Date() 
+    });
+
     await axios.post(`http://localhost:5000/api/logs`, {
       deployment_id: dep._id,
       logs_type: "deploy",
       message: `Pipeline Finished. Application is live.`,
     });
+    
+    console.log(`Simulation completed for Deployment: ${deploymentId}`);
   } catch (error) {
     console.error("❌ Simulation Error:", error.message);
   }
