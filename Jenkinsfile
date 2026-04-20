@@ -117,6 +117,7 @@ pipeline {
         }
     }
 
+    post {
         success {
             script {
                 if (env.DEPLOYMENT_ID) {
