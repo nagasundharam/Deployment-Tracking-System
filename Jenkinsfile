@@ -61,7 +61,10 @@ pipeline {
                     // FAIL-SAFE: Try-Catch block to prevent Exit Code 7 from stopping the build
                     try {
                         def response = sh(script: "curl -s --max-time 10 -X POST ${env.VITE_API_URL}/jenkins-webhook -H 'Content-Type: application/json' -d @initial_payload.json", returnStdout: true).trim()
-                        env.DEPLOYMENT_ID = sh(script: "echo '${response}' | grep -oP '\"_id\":\"\\K[^\"]+' | head -1", returnStdout: true).trim()
+                        echo "Raw Response: ${response}"
+                        
+                        def json = new groovy.json.JsonSlurper().parseText(response)
+                        env.DEPLOYMENT_ID = json.deployment._id
                         
                         if (env.DEPLOYMENT_ID) {
                             echo "Tracker Initialized successfully. ID: ${env.DEPLOYMENT_ID}"
@@ -70,7 +73,7 @@ pipeline {
                         }
                     } catch (Exception e) {
                         echo "--------------------------------------------------------------------------------"
-                        echo "WARNING: Could not connect to Tracker Backend. Error: ${e.message}"
+                        echo "WARNING: Could not connect to Tracker Backend or parse ID. Error: ${e.message}"
                         echo "Proceeding to Deploy stage to ensure containers are updated and healthy."
                         echo "--------------------------------------------------------------------------------"
                     }
