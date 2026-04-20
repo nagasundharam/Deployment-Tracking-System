@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { CheckCircle2, Clock, Circle, XCircle, Loader2 } from "lucide-react";
 import "./DeploymentDetails.css";
 
 const DeploymentDetails = () => {
@@ -414,37 +415,64 @@ const DeploymentDetails = () => {
         <div className="sidebar-column">
            {/* Vertical Timeline */}
            <div className="premium-card timeline-card">
-              <h3>Deployment Timeline</h3>
+              <h3>Pipeline Stages</h3>
               <div className="vertical-timeline">
                  {ensureStages.map((stage, idx) => (
                    <div key={idx} className={`v-stage-item ${stage.status}`}>
-                      <div className="v-stage-icon">
-                         {stage.status === 'success' && '✔'}
-                         {stage.status === 'running' && '⏳'}
-                         {stage.status === 'pending' && '○'}
-                         {(stage.status === 'failure' || stage.status === 'failed') && '×'}
+                      <div className="v-stage-icon-wrapper">
+                        <div className="v-stage-icon">
+                           {stage.status === 'success' && <CheckCircle2 size={16} strokeWidth={2.5} />}
+                           {stage.status === 'running' && <Loader2 size={16} strokeWidth={2.5} className="spin-loader" />}
+                           {stage.status === 'pending' && <Circle size={14} strokeWidth={2.5} />}
+                           {(stage.status === 'failure' || stage.status === 'failed') && <XCircle size={16} strokeWidth={2.5} />}
+                        </div>
+                        {idx < ensureStages.length - 1 && (
+                          <div className={`v-connector ${stage.status === 'success' ? 'filled' : stage.status === 'running' ? 'active' : ''}`} />
+                        )}
                       </div>
                       <div className="v-stage-content">
                          <h4>{stage.name}</h4>
                          <p className="stage-meta">
                             {stage.name.toLowerCase().includes('build') ? (
-                               deployment.artifacts?.[0] ? `Artifact: ${deployment.artifacts[0].name}` : "Building assets..."
+                               deployment.artifacts?.[0] ? `Artifact: ${deployment.artifacts[0].name}` : "Building production assets..."
                             ) : stage.name.toLowerCase().includes('deploy') ? (
-                               `Deploying to ${deployment.environment_id?.name || 'cluster'}`
+                               `Targeting ${deployment.environment_id?.name || 'cluster'}`
                             ) : stage.name.toLowerCase().includes('scan') ? (
-                               `Security and Vulnerability Scans`
+                               `Security & Compliance Scans`
                             ) : (
-                               `Status: ${stage.status}`
+                               `Stage is currently ${stage.status}`
                             )}
                          </p>
-                         <span className="stage-time">
-                            {stage.status === 'success' ? `COMPLETED ${stage.end_time ? '• ' + new Date(stage.end_time).toLocaleTimeString() : ''}` : ''}
-                            {stage.start_time && stage.end_time ? ` (${formatDuration(stage.start_time, stage.end_time)})` : ''}
-                            {stage.status === 'running' ? `IN PROGRESS` : ''}
-                            {stage.status === 'pending' ? `PENDING` : ''}
-                         </span>
+                         <div className="stage-time-badge">
+                            {stage.status === 'success' && (
+                              <>
+                                <CheckCircle2 size={10} />
+                                <span>DONE {stage.end_time ? '• ' + new Date(stage.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+                              </>
+                            )}
+                            {stage.status === 'running' && (
+                              <>
+                                <Loader2 size={10} className="spin-loader" />
+                                <span>PROCESSING</span>
+                              </>
+                            )}
+                            {stage.status === 'pending' && (
+                              <>
+                                <Clock size={10} />
+                                <span>PENDING</span>
+                              </>
+                            )}
+                            {(stage.status === 'failure' || stage.status === 'failed') && (
+                              <>
+                                <XCircle size={10} />
+                                <span>FAILED</span>
+                              </>
+                            )}
+                            {stage.start_time && stage.end_time && (
+                              <span style={{marginLeft: '4px', opacity: 0.8}}>({formatDuration(stage.start_time, stage.end_time)})</span>
+                            )}
+                         </div>
                       </div>
-                      {idx < ensureStages.length - 1 && <div className={`v-connector ${stage.status === 'success' ? 'filled' : ''}`} />}
                    </div>
                  ))}
               </div>
