@@ -117,11 +117,11 @@ pipeline {
         }
     }
 
-    post {
         success {
             script {
                 if (env.DEPLOYMENT_ID) {
-                    sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"success\"}'"
+                    echo "Marking Deployment as Success..."
+                    sh "curl -v -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"success\"}'"
                 }
             }
             echo "DEPLOYMENT SUCCESSFUL"
@@ -129,10 +129,9 @@ pipeline {
         failure {
             script {
                 if (env.DEPLOYMENT_ID) {
-                    // Update the failed stage immediately
+                    echo "Marking Deployment as Failed..."
                     notifyStage("Install & Build", "failure")
-                    // Mark entire deployment blocked/failed
-                    sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"failed\"}'"
+                    sh "curl -v -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/status -H 'Content-Type: application/json' -d '{\"status\": \"failed\"}'"
                 }
             }
             echo "DEPLOYMENT FAILED"
@@ -143,9 +142,11 @@ pipeline {
 def notifyStage(String name, String status) {
     if (env.DEPLOYMENT_ID) {
         try {
+            echo "Notifying Stage: ${name} -> ${status}"
             def stagePayload = [stageName: name, status: status]
             writeFile file: "stage_data.json", text: JsonOutput.toJson(stagePayload)
-            sh "curl -s -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/stage -H 'Content-Type: application/json' -d @stage_data.json"
+            def response = sh(script: "curl -v -X PATCH ${env.VITE_API_URL}/deployments/${env.DEPLOYMENT_ID}/stage -H 'Content-Type: application/json' -d @stage_data.json", returnStdout: true).trim()
+            echo "Stage Notification Response: ${response}"
         } catch (Exception e) {
             echo "Notification failed for ${name}: ${e.message}"
         }
