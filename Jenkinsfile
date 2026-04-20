@@ -63,9 +63,9 @@ pipeline {
                         def response = sh(script: "curl -s --max-time 10 -X POST ${env.VITE_API_URL}/jenkins-webhook -H 'Content-Type: application/json' -d @initial_payload.json", returnStdout: true).trim()
                         echo "Raw Response: ${response}"
                         
-                        // Extract the ID using sed (universally available on Linux agents where node/grep-P might be missing)
+                        // Extract the ID using sed (universally available on Linux agents)
                         writeFile file: 'response.json', text: response
-                        env.DEPLOYMENT_ID = sh(script: "grep -o '\"_id\":\"[^\"]*\"' response.json | tail -1 | cut -d'\"' -f4", returnStdout: true).trim()
+                        env.DEPLOYMENT_ID = sh(script: "sed -n 's/.*\"_id\":\"\\([a-f0-9]*\\)\".*/\\1/p' response.json | tail -1", returnStdout: true).trim()
                         
                         if (env.DEPLOYMENT_ID && env.DEPLOYMENT_ID != "null") {
                             echo "Tracker Initialized successfully. ID: ${env.DEPLOYMENT_ID}"
