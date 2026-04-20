@@ -12,12 +12,13 @@ mongoose.connect(process.env.MONGO_URI)
  * instead of looping forever looking for any running deployment.
  */
 const STAGE_DURATIONS_MS = {
-  "Build": 2000,
-  "Unit Tests": 2000,
+  "Source Code Analysis": 2000,
+  "Container Build": 3000,
   "Security Scan": 2000,
-  "Docker Build": 3000,
-  "Deploy": 3000,
-  "Health Check": 2000,
+  "Artifact Deployment": 3000,
+  "Checkout SCM": 1500, // For Jenkins fallback
+  "Deploy with Docker Compose": 4000,
+  "Verify Containers": 2000
 };
 
 async function runPipelineForDeployment(deploymentId) {

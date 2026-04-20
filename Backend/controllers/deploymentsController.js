@@ -298,6 +298,9 @@ exports.rollbackDeployment = async (req, res) => {
     });
     const saved = await rollback.save();
 
+    // Trigger simulator manually for rollback
+    runPipelineForDeployment(saved._id.toString());
+
     // Log the rollback
     await createAuditEntry(req.user?._id || req.user?.id, "Rollback Initiated", `From: ${original.version} -> To: ${saved.version} (Project: ${original.project_id?.name})`, req.ip);
 
@@ -319,6 +322,9 @@ exports.redeployDeployment = async (req, res) => {
       createdAt: new Date()
     });
     const saved = await redeploy.save();
+
+    // Trigger simulator manually for redeploy
+    runPipelineForDeployment(saved._id.toString());
 
     // Log the redeploy
     await createAuditEntry(req.user?._id || req.user?.id, "Redeploy Initiated", `Version: ${original.version} (Project: ${original.project_id?.name})`, req.ip);
