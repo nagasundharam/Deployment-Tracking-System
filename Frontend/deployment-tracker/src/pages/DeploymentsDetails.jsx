@@ -415,61 +415,66 @@ const DeploymentDetails = () => {
         <div className="sidebar-column">
            {/* Vertical Timeline */}
            <div className="premium-card timeline-card">
-              <h3>Pipeline Stages</h3>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '2px solid #f1f5f9', paddingBottom: '12px'}}>
+                <h3 style={{margin: 0, fontSize: '14px', fontWeight: 900, color: '#0f172a', letterSpacing: '1px'}}>PIPELINE STAGES v1.1</h3>
+                <span style={{fontSize: '10px', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold'}}>LIVE TRACKING</span>
+              </div>
               <div className="vertical-timeline">
                  {ensureStages.map((stage, idx) => (
-                   <div key={idx} className={`v-stage-item ${stage.status}`}>
+                   <div key={idx} className={`v-stage-item ${stage.status}`} style={{opacity: 1}}>
                       <div className="v-stage-icon-wrapper">
-                        <div className="v-stage-icon">
-                           {stage.status === 'success' && <CheckCircle2 size={16} strokeWidth={2.5} />}
-                           {stage.status === 'running' && <Loader2 size={16} strokeWidth={2.5} className="spin-loader" />}
-                           {stage.status === 'pending' && <Circle size={14} strokeWidth={2.5} />}
-                           {(stage.status === 'failure' || stage.status === 'failed') && <XCircle size={16} strokeWidth={2.5} />}
+                        <div className="v-stage-icon" style={{boxShadow: '0 4px 12px rgba(0,0,0,0.15)', width: '40px', height: '40px'}}>
+                           {stage.status === 'success' && <CheckCircle2 size={20} strokeWidth={3} />}
+                           {stage.status === 'running' && <Loader2 size={20} strokeWidth={3} className="spin-loader" />}
+                           {stage.status === 'pending' && <Clock size={18} strokeWidth={2.5} />}
+                           {(stage.status === 'failure' || stage.status === 'failed') && <XCircle size={20} strokeWidth={3} />}
                         </div>
                         {idx < ensureStages.length - 1 && (
-                          <div className={`v-connector ${stage.status === 'success' ? 'filled' : stage.status === 'running' ? 'active' : ''}`} />
+                          <div className={`v-connector ${stage.status === 'success' ? 'filled' : stage.status === 'running' ? 'active' : ''}`} style={{left: '19px', width: '3px'}} />
                         )}
                       </div>
-                      <div className="v-stage-content">
-                         <h4>{stage.name}</h4>
-                         <p className="stage-meta">
+                      <div className="v-stage-content" style={{paddingLeft: '10px'}}>
+                         <h4 style={{fontSize: '16px', marginBottom: '8px', color: stage.status === 'running' ? '#4f46e5' : stage.status === 'failed' || stage.status === 'failure' ? '#e11d48' : '#0f172a'}}>
+                            {stage.name}
+                         </h4>
+                         <p className="stage-meta" style={{fontSize: '14px', color: '#475569', marginBottom: '12px', fontWeight: 500}}>
                             {stage.name.toLowerCase().includes('build') ? (
-                               deployment.artifacts?.[0] ? `Artifact: ${deployment.artifacts[0].name}` : "Building production assets..."
+                               deployment.artifacts?.[0] ? `Artifact: ${deployment.artifacts[0].name}` : "Building production-ready assets..."
                             ) : stage.name.toLowerCase().includes('deploy') ? (
-                               `Targeting ${deployment.environment_id?.name || 'cluster'}`
+                               `Deploying to ${deployment.environment_id?.name || 'target infrastructure'}`
                             ) : stage.name.toLowerCase().includes('scan') ? (
-                               `Security & Compliance Scans`
+                               `Security & Compliance Scans in progress`
                             ) : (
-                               `Stage is currently ${stage.status}`
+                               `Current Stage Status: ${stage.status.toUpperCase()}`
                             )}
                          </p>
-                         <div className="stage-time-badge">
+                         <div className="stage-time-badge" style={{padding: '6px 14px', borderRadius: '10px', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#1e293b'}}>
                             {stage.status === 'success' && (
                               <>
-                                <CheckCircle2 size={10} />
-                                <span>DONE {stage.end_time ? '• ' + new Date(stage.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+                                <CheckCircle2 size={12} style={{marginRight: '6px'}} />
+                                <span style={{fontWeight: 800}}>COMPLETED {stage.end_time ? 'AT ' + new Date(stage.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
                               </>
                             )}
                             {stage.status === 'running' && (
                               <>
-                                <Loader2 size={10} className="spin-loader" />
-                                <span>PROCESSING</span>
+                                <Loader2 size={12} className="spin-loader" style={{marginRight: '6px'}} />
+                                <span style={{fontWeight: 800, color: '#4f46e5'}}>CURRENTLY RUNNING</span>
                               </>
                             )}
                             {stage.status === 'pending' && (
                               <>
-                                <Clock size={10} />
-                                <span>PENDING</span>
+                                <Clock size={12} style={{marginRight: '6px'}} />
+                                <span style={{fontWeight: 800}}>PENDING</span>
                               </>
                             )}
                             {(stage.status === 'failure' || stage.status === 'failed') && (
                               <>
-                                <XCircle size={10} />
-                                <span>FAILED</span>
+                                <XCircle size={12} style={{marginRight: '6px'}} />
+                                <span style={{fontWeight: 800, color: '#e11d48'}}>FAILED</span>
                               </>
                             )}
                             {stage.start_time && stage.end_time && (
-                              <span style={{marginLeft: '4px', opacity: 0.8}}>({formatDuration(stage.start_time, stage.end_time)})</span>
+                              <span style={{marginLeft: '8px', color: '#64748b', fontSize: '11px'}}>(Duration: {formatDuration(stage.start_time, stage.end_time)})</span>
                             )}
                          </div>
                       </div>
