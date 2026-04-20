@@ -66,12 +66,20 @@ pipeline {
                         // Use the Pipeline Utility Steps plugin to read the JSON comfortably
                         writeFile file: 'response.json', text: response
                         def json = readJSON file: 'response.json'
-                        env.DEPLOYMENT_ID = json.deployment._id
                         
-                        if (env.DEPLOYMENT_ID) {
+                        // Debugging: Print keys to see structure
+                        echo "JSON Keys: ${json.keySet()}"
+                        if (json.deployment) {
+                            echo "Deployment Found in JSON"
+                            env.DEPLOYMENT_ID = json.deployment._id
+                        }
+                        
+                        if (env.DEPLOYMENT_ID && env.DEPLOYMENT_ID != "null") {
                             echo "Tracker Initialized successfully. ID: ${env.DEPLOYMENT_ID}"
                             // Update this stage to success now that we have an initialized deployment
                             notifyStage("Initialize Tracker", "success")
+                        } else {
+                            echo "ERROR: DEPLOYMENT_ID is empty or null after parsing. JSON: ${response}"
                         }
                     } catch (Exception e) {
                         echo "--------------------------------------------------------------------------------"
