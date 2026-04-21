@@ -28,8 +28,8 @@ export default function Login() {
       );
 
       // Save token + user
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      sessionStorage.setItem("token", res.data.token);
+      sessionStorage.setItem("user", JSON.stringify(res.data.user));
       console.log("Login successful:", res.data);
 
       navigate("/");

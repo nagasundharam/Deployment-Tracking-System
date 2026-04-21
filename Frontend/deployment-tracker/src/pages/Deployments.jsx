@@ -28,7 +28,7 @@ export default function Deployments() {
   });
 
   const itemsPerPage = 8;
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(sessionStorage.getItem("user"));
   const role = (user?.role || "developer").toLowerCase(); // fallback safety
   // const role = "admin"; // Testing
 
@@ -85,7 +85,7 @@ export default function Deployments() {
   // 1. Optimized Parallel Fetching
   const fetchInitialData = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -150,7 +150,7 @@ export default function Deployments() {
     async (e) => {
       e.preventDefault();
       try {
-        const token = localStorage.getItem("token"); // GET TOKEN
+        const token = sessionStorage.getItem("token"); // GET TOKEN
         if (!token) {
           alert("You are not authenticated.");
           return;

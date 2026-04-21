@@ -35,7 +35,7 @@ function timeSince(date) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const userStr = localStorage.getItem("user");
+  const userStr = sessionStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
   const role = (user?.role || "developer").toLowerCase();
 

@@ -209,6 +209,34 @@
   text-overflow: ellipsis;
 }
 
+.footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.switch-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 14px;
+  background: rgba(79, 70, 229, 0.05);
+  border: 1px dashed var(--color-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.switch-btn:hover {
+  background: var(--color-primary);
+  color: white;
+  border-style: solid;
+}
+
 .logout-btn {
   display: flex;
   align-items: center;

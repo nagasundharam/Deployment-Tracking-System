@@ -61,18 +61,24 @@ const navConfig = [
 function Navbar() {
   const navigate = useNavigate();
 
-  // Safely parse user from localStorage
-  const userJson = localStorage.getItem("user");
+  // Safely parse user from sessionStorage
+  const userJson = sessionStorage.getItem("user");
   const user = userJson ? JSON.parse(userJson) : null;
   const role = (user?.role || "developer").toLowerCase();
   console.log(role);
 
   const handleLogout = () => {
     // Clear session data
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
 
     // Force refresh to login to clear all React states
+    window.location.href = "/login";
+  };
+
+  const handleSwitchAccount = () => {
+    // Clear session and redirect to login specifically for switching
+    sessionStorage.clear();
     window.location.href = "/login";
   };
 
@@ -119,10 +125,16 @@ function Navbar() {
           </div>
         </div>
 
-        <button className="logout-btn" onClick={handleLogout}>
-          <LogOut size={18} />
-          <span>Logout</span>
-        </button>
+        <div className="footer-actions">
+          <button className="switch-btn" onClick={handleSwitchAccount}>
+            <span>Switch Account</span>
+          </button>
+          
+          <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={18} />
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
 
     </aside>

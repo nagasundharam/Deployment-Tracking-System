@@ -10,10 +10,10 @@ export default function Projects() {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  // Retrieve auth data from localStorage
-  const userRaw = localStorage.getItem("user");
+  // Retrieve auth data from sessionStorage
+  const userRaw = sessionStorage.getItem("user");
   const user = userRaw ? JSON.parse(userRaw) : null;
-  const token = localStorage.getItem("token"); 
+  const token = sessionStorage.getItem("token"); 
   const role = (user?.role || "developer").toLowerCase();
 
   const [formData, setFormData] = useState({
@@ -29,14 +29,14 @@ export default function Projects() {
   useEffect(() => {
     const fetchData = async () => {
       // DEBUG: See exactly what is in storage
-      const rawUser = localStorage.getItem("user");
-      const savedToken = localStorage.getItem("token");
+      const rawUser = sessionStorage.getItem("user");
+      const savedToken = sessionStorage.getItem("token");
       
       console.log("Storage Check - User:", rawUser);
       console.log("Storage Check - Token:", savedToken);
 
       if (!rawUser || !savedToken) {
-        console.error("Fetch aborted: No user or token found in LocalStorage.");
+        console.error("Fetch aborted: No user or token found in SessionStorage.");
         return;
       }
 
@@ -70,7 +70,7 @@ export default function Projects() {
     e.preventDefault();
     
     // Safety check: ensure we have the creator ID
-    const creatorId = user?.id || JSON.parse(localStorage.getItem("user"))?.id;
+    const creatorId = user?.id || JSON.parse(sessionStorage.getItem("user"))?.id;
     console.log(creatorId);
     
     if (!creatorId) {

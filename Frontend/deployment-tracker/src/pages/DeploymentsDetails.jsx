@@ -10,7 +10,7 @@ const DeploymentDetails = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(sessionStorage.getItem("user"));
   const role = user?.role || "developer";
   const currentUserId = user?.id || user?._id;
   
@@ -31,7 +31,7 @@ const DeploymentDetails = () => {
   // 1. Fetch Deployment & Logs from Backend
   const fetchData = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
 
       // Fetch Deployment Status
@@ -78,7 +78,7 @@ const DeploymentDetails = () => {
   const sendAuditEvent = useCallback(
     async (action) => {
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         const username = user?.username || user?.name || "unknown";
         const projectName = deployment?.project_id?.name || "Unknown Project";
 
@@ -142,7 +142,7 @@ const DeploymentDetails = () => {
     async (nextStatus, auditLabel) => {
       try {
         setActionLoading(true);
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/deployments/${id}/status`,
           {
@@ -193,7 +193,7 @@ const DeploymentDetails = () => {
     if (!canRedeploy) return;
     try {
       setActionLoading(true);
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/deployments/${id}/redeploy`,
         {
@@ -227,7 +227,7 @@ const DeploymentDetails = () => {
 
     try {
       setActionLoading(true);
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/deployments/${id}/rollback`,
         {

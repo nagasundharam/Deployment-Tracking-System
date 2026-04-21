@@ -15,7 +15,7 @@ const Settings = () => {
   const [showModal, setShowModal] = useState(false);
 
   // Parse user for ID and role
-  const userJson = localStorage.getItem("user");
+  const userJson = sessionStorage.getItem("user");
   const user = userJson ? JSON.parse(userJson) : null;
   const userId = user?.id || user?._id;
   const isAdmin = user?.role === "admin";

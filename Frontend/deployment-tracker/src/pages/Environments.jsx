@@ -5,11 +5,11 @@ import { api } from "../services/api";
 const Environments = () => {
   // --- 1. DATA STATES (Initialized from LocalStorage for instant UI) ---
   const [environments, setEnvironments] = useState(() => {
-    const saved = localStorage.getItem("cache_envs");
+    const saved = sessionStorage.getItem("cache_envs");
     return saved ? JSON.parse(saved) : [];
   });
   const [projects, setProjects] = useState(() => {
-    const saved = localStorage.getItem("cache_projs");
+    const saved = sessionStorage.getItem("cache_projs");
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -18,7 +18,7 @@ const Environments = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Parse user for RBAC
-  const userJson = localStorage.getItem("user");
+  const userJson = sessionStorage.getItem("user");
   const user = userJson ? JSON.parse(userJson) : null;
   const role = (user?.role || "developer").toLowerCase();
 
@@ -50,20 +50,20 @@ const Environments = () => {
       if (Array.isArray(envData)) {
         console.log("Environments Synced:", envData);
         setEnvironments(envData);
-        localStorage.setItem("cache_envs", JSON.stringify(envData));
+        sessionStorage.setItem("cache_envs", JSON.stringify(envData));
       }
       if (Array.isArray(projData)) {
         console.log("Projects Synced:", projData);
         setProjects(projData);
-        localStorage.setItem("cache_projs", JSON.stringify(projData));
+        sessionStorage.setItem("cache_projs", JSON.stringify(projData));
       }
 
     } catch (err) {
       console.error("Infrastructure Sync Error:", err);
       // Optional: Handle unauthorized access explicitly
       if (err.message.includes("401")) {
-         localStorage.removeItem("user");
-         localStorage.removeItem("token");
+         sessionStorage.removeItem("user");
+         sessionStorage.removeItem("token");
          window.location.href = "/login";
       }
     } finally {
